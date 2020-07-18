@@ -75,7 +75,8 @@ class Flownet2:
         blobs['img1s'] = blobs['img1']*0.00392156862745098
 
         #mean = np.array([0.411451, 0.432060, 0.450141])
-        mean = np.array([0.37655231, 0.39534855, 0.40119368])
+        # mean = np.array([0.37655231, 0.39534855, 0.40119368])
+        mean = np.array([0,0,0])
         blobs['img0_nomean'] = blobs['img0s'] - mean
         blobs['img1_nomean'] = blobs['img1s'] - mean
 
