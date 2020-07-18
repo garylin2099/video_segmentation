@@ -131,7 +131,7 @@ def train(args):
         if args.static == 'lrr':
             loader_static.restore(sess, './checkpoints/lrr_pretrained')
         elif args.static == 'dilation':
-            assert False, "Pretrained dilation model will soon be released."
+            # assert False, "Pretrained dilation model will soon be released."
             saver.restore(sess, './checkpoints/dilation_grfp')
 
         if args.flow == 'flownet1':
