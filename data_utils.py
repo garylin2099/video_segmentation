@@ -71,8 +71,6 @@ def prepare_data(ids, im_width, im_height, test_size, seed=42, path=None):
 
         i = i + 5
         # i = i + 1
-        if i % 10 == 0:
-            print("i % s" % i)
 
     # return train_test_split(X, y, test_size=test_size, random_state=seed)
     return X, y
