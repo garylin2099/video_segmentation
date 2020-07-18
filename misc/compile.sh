@@ -7,7 +7,7 @@ nvcc -std=c++11 -c -o bilinear_warping.cu.o bilinear_warping.cu.cc \
 
 # g++ -std=c++11 -shared -o bilinear_warping.so bilinear_warping.cc \
 # 	bilinear_warping.cu.o -I $TF_INC -fPIC -L  /usr/local/cuda/lib64/ -lcudart
-# g++ -std=c++11 -shared -o bilinear_warping.so bilinear_warping.cc \
-	# bilinear_warping.cu.o -I $TF_INC -fPIC -L  /usr/local/cuda-10.0/lib64/ -lcudart
 g++ -std=c++11 -shared -o bilinear_warping.so bilinear_warping.cc \
-	bilinear_warping.cu.o -I $TF_INC -fPIC -L  /usr/local/cuda-10.0/lib64/ -lcudart -D_GLIBCXX_USE_CXX11_ABI=0
+	bilinear_warping.cu.o -I $TF_INC -fPIC -L  /usr/local/cuda-10.0/lib64/ -lcudart
+# g++ -std=c++11 -shared -o bilinear_warping.so bilinear_warping.cc \
+# 	bilinear_warping.cu.o -I $TF_INC -fPIC -L  /usr/local/cuda-10.0/lib64/ -lcudart -D_GLIBCXX_USE_CXX11_ABI=0
