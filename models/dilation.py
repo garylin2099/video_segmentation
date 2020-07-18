@@ -134,7 +134,9 @@ class dilation10network:
         #opt = tf.train.AdamOptimizer(learning_rate=learning_rate, beta1=0.95, beta2=0.99, epsilon=1e-8)
         opt = tf.train.MomentumOptimizer(learning_rate=learning_rate, momentum=0.9)
         opt = opt.minimize(loss,
-            [v for k, v in self.weights.iteritems() if (k[0:4] == 'ctx_' or k in ['fc6', 'fc7', 'final'])].extend(
-            [v for k, v in self.biases.iteritems() if (k[0:4] == 'ctx_' or k in ['fc6', 'fc7', 'final'])]))
+            # [v for k, v in self.weights.iteritems() if (k[0:4] == 'ctx_' or k in ['fc6', 'fc7', 'final'])].extend(
+            # [v for k, v in self.biases.iteritems() if (k[0:4] == 'ctx_' or k in ['fc6', 'fc7', 'final'])]))
+            [v for k, v in self.weights.items() if (k[0:4] == 'ctx_' or k in ['fc6', 'fc7', 'final'])].extend(
+            [v for k, v in self.biases.items() if (k[0:4] == 'ctx_' or k in ['fc6', 'fc7', 'final'])]))
 
         return opt, dLdy
