@@ -4,7 +4,8 @@ class dilation10network:
     def __init__(self, dropout_keeprate = 1.0):
         #
         self.dropout_keeprate = dropout_keeprate
-        self.mean = [72.39,82.91,73.16]
+        # self.mean = [72.39,82.91,73.16]
+        self.mean = [0,0,0]
 
         self.weights = {
             'conv1_1': tf.Variable(tf.zeros([3, 3, 3, 64], dtype=tf.float32), name='conv1_1'),
@@ -27,19 +28,19 @@ class dilation10network:
             
             'fc6': tf.Variable(tf.zeros([7, 7, 512, 4096], dtype=tf.float32), name='fc6'),
             'fc7': tf.Variable(tf.zeros([1, 1, 4096, 4096], dtype=tf.float32), name='fc7'),
-            'final': tf.Variable(tf.zeros([1, 1, 4096, 19], dtype=tf.float32), name='final'),
+            'final': tf.Variable(tf.zeros([1, 1, 4096, 7], dtype=tf.float32), name='final'),
             
-            'ctx_conv1_1': tf.Variable(tf.zeros([3, 3, 19, 19], dtype=tf.float32), name='ctx_conv1_1'),
-            'ctx_conv1_2': tf.Variable(tf.zeros([3, 3, 19, 19], dtype=tf.float32), name='ctx_conv1_1'),
-            'ctx_conv2_1': tf.Variable(tf.zeros([3, 3, 19, 19], dtype=tf.float32), name='ctx_conv1_1'),
-            'ctx_conv3_1': tf.Variable(tf.zeros([3, 3, 19, 19], dtype=tf.float32), name='ctx_conv1_1'),
-            'ctx_conv4_1': tf.Variable(tf.zeros([3, 3, 19, 19], dtype=tf.float32), name='ctx_conv1_1'),
-            'ctx_conv5_1': tf.Variable(tf.zeros([3, 3, 19, 19], dtype=tf.float32), name='ctx_conv1_1'),
-            'ctx_conv6_1': tf.Variable(tf.zeros([3, 3, 19, 19], dtype=tf.float32), name='ctx_conv1_1'),
-            'ctx_conv7_1': tf.Variable(tf.zeros([3, 3, 19, 19], dtype=tf.float32), name='ctx_conv1_1'),
-            'ctx_fc1': tf.Variable(tf.zeros([3, 3, 19, 19], dtype=tf.float32), name='ctx_conv1_1'),
-            'ctx_final': tf.Variable(tf.zeros([1, 1, 19, 19], dtype=tf.float32), name='ctx_conv1_1'),
-            'ctx_upsample': tf.Variable(tf.zeros([16, 16, 19, 19], dtype=tf.float32), name='ctx_conv1_1'),
+            'ctx_conv1_1': tf.Variable(tf.zeros([3, 3, 7, 7], dtype=tf.float32), name='ctx_conv1_1'),
+            'ctx_conv1_2': tf.Variable(tf.zeros([3, 3, 7, 7], dtype=tf.float32), name='ctx_conv1_1'),
+            'ctx_conv2_1': tf.Variable(tf.zeros([3, 3, 7, 7], dtype=tf.float32), name='ctx_conv1_1'),
+            'ctx_conv3_1': tf.Variable(tf.zeros([3, 3, 7, 7], dtype=tf.float32), name='ctx_conv1_1'),
+            'ctx_conv4_1': tf.Variable(tf.zeros([3, 3, 7, 7], dtype=tf.float32), name='ctx_conv1_1'),
+            'ctx_conv5_1': tf.Variable(tf.zeros([3, 3, 7, 7], dtype=tf.float32), name='ctx_conv1_1'),
+            'ctx_conv6_1': tf.Variable(tf.zeros([3, 3, 7, 7], dtype=tf.float32), name='ctx_conv1_1'),
+            'ctx_conv7_1': tf.Variable(tf.zeros([3, 3, 7, 7], dtype=tf.float32), name='ctx_conv1_1'),
+            'ctx_fc1': tf.Variable(tf.zeros([3, 3, 7, 7], dtype=tf.float32), name='ctx_conv1_1'),
+            'ctx_final': tf.Variable(tf.zeros([1, 1, 7, 7], dtype=tf.float32), name='ctx_conv1_1'),
+            'ctx_upsample': tf.Variable(tf.zeros([16, 16, 7, 7], dtype=tf.float32), name='ctx_conv1_1'),
         }
         self.biases = {
             'conv1_1': tf.Variable(tf.zeros([64], dtype=tf.float32), name='conv1_1_b'),
@@ -62,23 +63,23 @@ class dilation10network:
             
             'fc6': tf.Variable(tf.zeros([4096], dtype=tf.float32), name='fc6_b'),
             'fc7': tf.Variable(tf.zeros([4096], dtype=tf.float32), name='fc7_b'),
-            'final': tf.Variable(tf.zeros([19], dtype=tf.float32), name='final_b'),
+            'final': tf.Variable(tf.zeros([7], dtype=tf.float32), name='final_b'),
             
-            'ctx_conv1_1': tf.Variable(tf.zeros([19], dtype=tf.float32), name='ctx_conv1_1_b'),
-            'ctx_conv1_2': tf.Variable(tf.zeros([19], dtype=tf.float32), name='ctx_conv1_1_b'),
-            'ctx_conv2_1': tf.Variable(tf.zeros([19], dtype=tf.float32), name='ctx_conv1_1_b'),
-            'ctx_conv3_1': tf.Variable(tf.zeros([19], dtype=tf.float32), name='ctx_conv1_1_b'),
-            'ctx_conv4_1': tf.Variable(tf.zeros([19], dtype=tf.float32), name='ctx_conv1_1_b'),
-            'ctx_conv5_1': tf.Variable(tf.zeros([19], dtype=tf.float32), name='ctx_conv1_1_b'),
-            'ctx_conv6_1': tf.Variable(tf.zeros([19], dtype=tf.float32), name='ctx_conv1_1_b'),
-            'ctx_conv7_1': tf.Variable(tf.zeros([19], dtype=tf.float32), name='ctx_conv1_1_b'),
-            'ctx_fc1': tf.Variable(tf.zeros([19], dtype=tf.float32), name='ctx_conv1_1_b'),
-            'ctx_final': tf.Variable(tf.zeros([19], dtype=tf.float32), name='ctx_conv1_1_b'),
+            'ctx_conv1_1': tf.Variable(tf.zeros([7], dtype=tf.float32), name='ctx_conv1_1_b'),
+            'ctx_conv1_2': tf.Variable(tf.zeros([7], dtype=tf.float32), name='ctx_conv1_1_b'),
+            'ctx_conv2_1': tf.Variable(tf.zeros([7], dtype=tf.float32), name='ctx_conv1_1_b'),
+            'ctx_conv3_1': tf.Variable(tf.zeros([7], dtype=tf.float32), name='ctx_conv1_1_b'),
+            'ctx_conv4_1': tf.Variable(tf.zeros([7], dtype=tf.float32), name='ctx_conv1_1_b'),
+            'ctx_conv5_1': tf.Variable(tf.zeros([7], dtype=tf.float32), name='ctx_conv1_1_b'),
+            'ctx_conv6_1': tf.Variable(tf.zeros([7], dtype=tf.float32), name='ctx_conv1_1_b'),
+            'ctx_conv7_1': tf.Variable(tf.zeros([7], dtype=tf.float32), name='ctx_conv1_1_b'),
+            'ctx_fc1': tf.Variable(tf.zeros([7], dtype=tf.float32), name='ctx_conv1_1_b'),
+            'ctx_final': tf.Variable(tf.zeros([7], dtype=tf.float32), name='ctx_conv1_1_b'),
         }
 
     def get_output_tensor(self, x, out_size):
         # returns output tensor
-        output_shape = [1, out_size[0], out_size[1], 19]
+        output_shape = [1, out_size[0], out_size[1], 7]
 
         conv1_1 = tf.nn.relu(tf.nn.conv2d(x, self.weights['conv1_1'], strides=[1,1,1,1], padding="VALID") + self.biases['conv1_1'])
         conv1_2 = tf.nn.relu(tf.nn.conv2d(conv1_1, self.weights['conv1_2'], strides=[1,1,1,1], padding="VALID") + self.biases['conv1_2'])
