@@ -17,10 +17,10 @@ from keras.preprocessing.image import img_to_array, load_img
 from constants import *
 
 def prepare_data(ids, im_width, im_height, test_size, seed=42, path=None):
-    X = np.zeros((len(ids) * 5, im_height, im_width, 3), dtype=np.float32)
-    y = np.zeros((len(ids) * 5, im_height, im_width, N_CLASSES), dtype=np.float32) #### adjust classes
-    # X = np.zeros((len(ids), im_height, im_width, 3), dtype=np.float32)
-    # y = np.zeros((len(ids), im_height, im_width, N_CLASSES), dtype=np.float32) #### adjust classes
+    # X = np.zeros((len(ids) * 5, im_height, im_width, 3), dtype=np.float32)
+    # y = np.zeros((len(ids) * 5, im_height, im_width, N_CLASSES), dtype=np.float32) #### adjust classes
+    X = np.zeros((len(ids), im_height, im_width, 3), dtype=np.float32)
+    y = np.zeros((len(ids), im_height, im_width, N_CLASSES), dtype=np.float32) #### adjust classes
     i = 0
     for _, id_ in tqdm_notebook(enumerate(ids), total=len(ids)):
         # Load images
@@ -53,24 +53,24 @@ def prepare_data(ids, im_width, im_height, test_size, seed=42, path=None):
         X[i] = x_img
         y[i] = ground_truth
 
-        # Apply Vertical Flip Augmentation
-        X[i+1] = np.flip(x_img, 0)
-        y[i+1] = np.flip(ground_truth, 0)
+        # # Apply Vertical Flip Augmentation
+        # X[i+1] = np.flip(x_img, 0)
+        # y[i+1] = np.flip(ground_truth, 0)
 
-        # Apply Horizontal Flip Augmentation
-        X[i+2] = np.flip(x_img, 1)
-        y[i+2] = np.flip(ground_truth, 1)
+        # # Apply Horizontal Flip Augmentation
+        # X[i+2] = np.flip(x_img, 1)
+        # y[i+2] = np.flip(ground_truth, 1)
 
-        # Apply 90-degrees Rotation Augmentation
-        X[i+3] = np.rot90(x_img)
-        y[i+3] = np.rot90(ground_truth)
+        # # Apply 90-degrees Rotation Augmentation
+        # X[i+3] = np.rot90(x_img)
+        # y[i+3] = np.rot90(ground_truth)
 
-        # Apply 180-degrees Rotation Augmentation
-        X[i+4] = np.rot90(np.rot90(x_img))
-        y[i+4] = np.rot90(np.rot90(ground_truth))
+        # # Apply 180-degrees Rotation Augmentation
+        # X[i+4] = np.rot90(np.rot90(x_img))
+        # y[i+4] = np.rot90(np.rot90(ground_truth))
 
-        i = i + 5
-        # i = i + 1
+        # i = i + 5
+        i = i + 1
 
     # return train_test_split(X, y, test_size=test_size, random_state=seed)
     return X, y
