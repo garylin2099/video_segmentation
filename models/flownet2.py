@@ -156,10 +156,10 @@ class Flownet2:
 
         blobs['predict_flow6'] = tf.nn.conv2d(blobs['conv6_1'], self.weights['Convolution1_w'], strides=[1,1,1,1], padding="SAME") + self.weights['Convolution1_b']
 
-        blobs['deconv5'] = tf.nn.conv2d_transpose(blobs['conv6_1'], self.weights['deconv5_w'], output_shape=[batch_size, ADAPTED_HEIGHT/32, ADAPTED_WIDTH/32, 512], strides=[1,2,2,1]) + self.weights['deconv5_b']
+        blobs['deconv5'] = tf.nn.conv2d_transpose(blobs['conv6_1'], self.weights['deconv5_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/32), tf.to_int32(ADAPTED_WIDTH/32), 512], strides=[1,2,2,1]) + self.weights['deconv5_b']
         blobs['deconv5'] = self.leaky_relu(blobs['deconv5'], 0.1)
         
-        blobs['upsampled_flow6_to_5'] = tf.nn.conv2d_transpose(blobs['predict_flow6'], self.weights['upsample_flow6to5_w'], output_shape=[batch_size, ADAPTED_HEIGHT/32, ADAPTED_WIDTH/32, 2], strides=[1,2,2,1]) + self.weights['upsample_flow6to5_b']
+        blobs['upsampled_flow6_to_5'] = tf.nn.conv2d_transpose(blobs['predict_flow6'], self.weights['upsample_flow6to5_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/32), tf.to_int32(ADAPTED_WIDTH/32), 2], strides=[1,2,2,1]) + self.weights['upsample_flow6to5_b']
         
         blobs['concat5'] = tf.concat([blobs['conv5_1'], blobs['deconv5'], blobs['upsampled_flow6_to_5']], axis=3)
 
