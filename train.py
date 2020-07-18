@@ -1,7 +1,7 @@
 import argparse, glob, os, cv2, sys, pickle, random
 import numpy as np
 import tensorflow as tf
-import config as cfg
+# import config as cfg
 from models.stgru import STGRU
 from models.lrr import LRR
 from models.dilation import dilation10network
