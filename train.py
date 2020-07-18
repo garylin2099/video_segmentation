@@ -91,8 +91,8 @@ def train(args):
             flow_img1 = tf.placeholder(tf.float32)
             flow_tensor = flow_network.get_output_tensor(flow_img0, flow_img1, im_size)
 
-    # RNN = STGRU([nbr_classes, im_size[0], im_size[1]], [7, 7], bilinear_warping_module)
-    RNN = STGRU([nbr_classes, im_size[0], im_size[1]], [6, 6], bilinear_warping_module)
+    RNN = STGRU([nbr_classes, im_size[0], im_size[1]], [7, 7], bilinear_warping_module)
+    # RNN = STGRU([nbr_classes, im_size[0], im_size[1]], [6, 6], bilinear_warping_module)
     
     gru_opt, gru_loss, gru_prediction, gru_learning_rate, \
         gru_input_images_tensor, gru_input_flow_tensor, \

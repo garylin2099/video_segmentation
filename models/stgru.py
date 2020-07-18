@@ -15,7 +15,7 @@ class STGRU:
 
         identity = np.zeros((conv_height, conv_width, channels, channels))
         for k in range(channels):
-            identity[conv_height/2, conv_width/2, k, k] = 1.
+            identity[int(conv_height/2), int(conv_width/2), k, k] = 1.
             identity_map = tf.constant(identity, dtype=tf.float32)
         # identity + noise was needed for some variables to train the model 
         self.weights = {
