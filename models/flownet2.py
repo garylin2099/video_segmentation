@@ -474,7 +474,7 @@ class Flownet2:
         blobs['blob135'] = tf.nn.conv2d_transpose(blobs['blob132'], self.weights['netsd_deconv3_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/8), tf.to_int32(ADAPTED_WIDTH/8), 128], strides=[1,2,2,1]) + self.weights['netsd_deconv3_b']
         blobs['blob135'] = self.leaky_relu(blobs['blob135'], 0.1)
         
-        blobs['blob136'] = tf.nn.conv2d_transpose(blobs['blob134'], self.weights['netsd_upsample_flow4to3_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/8), ADAPTED_WIDTH/8, 2], strides=[1,2,2,1]) + self.weights['netsd_upsample_flow4to3_b']
+        blobs['blob136'] = tf.nn.conv2d_transpose(blobs['blob134'], self.weights['netsd_upsample_flow4to3_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/8), tf.to_int32(ADAPTED_WIDTH/8), 2], strides=[1,2,2,1]) + self.weights['netsd_upsample_flow4to3_b']
         
         blobs['blob137'] = tf.concat([blobs['blob117'], blobs['blob135'], blobs['blob136']], axis=3)
 
