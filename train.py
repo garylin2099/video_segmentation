@@ -9,6 +9,8 @@ from models.flownet2 import Flownet2
 from models.flownet1 import Flownet1
 from tensorflow.python.framework import ops
 
+from constants import *
+
 bilinear_warping_module = tf.load_op_library('./misc/bilinear_warping.so')
 @ops.RegisterGradient("BilinearWarping")
 def _BilinearWarping(op, grad):
@@ -17,41 +19,46 @@ def _BilinearWarping(op, grad):
 class DataLoader():
     def __init__(self, im_size, nbr_frames):
         self.im_size = im_size
-        self.dataset_size = [1024, 2048]
+        # self.dataset_size = [1024, 2048]
         self.nbr_frames = nbr_frames
-        self.L = glob.glob(os.path.join(cfg.cityscapes_dir, 'gtFine', 'train', "*", "*labelTrainIds.png"))
+        # self.L = glob.glob(os.path.join(cfg.cityscapes_dir, 'gtFine', 'train', "*", "*labelTrainIds.png"))
+        self.L = glob.glob(os.path.join(VD_TRAIN_PATH, "*.png"))
         random.shuffle(self.L)
         self.idx = 0
 
     def get_next_sequence(self):
-        H, W = self.dataset_size
+        # H, W = self.dataset_size
         h, w = self.im_size
 
-        offset = [np.random.randint(H - h),
-            np.random.randint(W - w)]
-        i0, j0 = offset
-        i1, j1 = i0 + h, j0 + w
+        # offset = [np.random.randint(H - h),
+        #     np.random.randint(W - w)]
+        # i0, j0 = offset
+        # i1, j1 = i0 + h, j0 + w
 
-        im_path = self.L[self.idx % len(self.L)]
+        im_path = self.L[self.idx % len(self.L)] # the gt path, later split into image path
         self.idx += 1
 
         parts = im_path.split('/')[-1].split('_')
-        city, seq, frame = parts[0], parts[1], parts[2]
+        # city, seq, frame = parts[0], parts[1], parts[2]
+        seq, frame = parts[0], parts[2]
 
         images = []
-        gt = cv2.imread(im_path, 0)[i0:i1, j0:j1]
+        # gt = cv2.imread(im_path, 0)[i0:i1, j0:j1]
+        gt = cv2.imread(im_path, 0)
         
         for dt in range(-self.nbr_frames + 1, 1):
             t = int(frame) + dt
             
-            frame_path = os.path.join(cfg.cityscapes_video_dir, 'leftImg8bit_sequence', 'train', 
-                    city, ("%s_%s_%06d_leftImg8bit.png" % (city, seq, t)))
-            images.append(cv2.imread(frame_path, 1).astype(np.float32)[i0:i1,j0:j1][np.newaxis,...])
-            
+            # frame_path = os.path.join(cfg.cityscapes_video_dir, 'leftImg8bit_sequence', 'train', 
+            #         city, ("%s_%s_%06d_leftImg8bit.png" % (city, seq, t)))
+            frame_path = os.path.join(VD_TRAIN_PATH, ("%s_02_%02d_2020_cal.jpg" % (seq, t)))
+            # images.append(cv2.imread(frame_path, 1).astype(np.float32)[i0:i1,j0:j1][np.newaxis,...])
+            images.append(cv2.imread(frame_path, 1).astype(np.float32)[np.newaxis,...]) # seems to be channel dimension first
         return images, gt
 
 def train(args):
-    nbr_classes = 19
+    # nbr_classes = 19
+    nbr_classes = 7
 
     # learning rates for the GRU and the static segmentation networks, respectively
     learning_rate = 2e-5
@@ -62,11 +69,12 @@ def train(args):
     t0_dilation_net = 5000
 
     im_size = [512, 512]
-    image_mean = [72.39,82.91,73.16] # the mean is automatically subtracted in some modules e.g. flownet2, so be careful
+    # image_mean = [72.39,82.91,73.16] # the mean is automatically subtracted in some modules e.g. flownet2, so be careful
+    image_mean = [0,0,0] # need to replace with our data
 
-    f = open('misc/cityscapes_labels.pckl')
-    cs_id2trainid, cs_id2name = pickle.load(f)
-    f.close()
+    # f = open('misc/cityscapes_labels.pckl')
+    # cs_id2trainid, cs_id2name = pickle.load(f)
+    # f.close()
 
     assert args.static in ['dilation', 'lrr'], "Only dilation and LRR are supported for now."
 
@@ -101,7 +109,7 @@ def train(args):
         static_network = dilation10network()
         static_output = static_network.get_output_tensor(static_input, im_size)
 
-    data_loader = DataLoader(im_size, args.frames)
+    data_loader = DataLoader(im_size, args.frames) # arg.frames is how many frames to use
 
     loss_history = np.zeros(nbr_iterations)
     loss_history_smoothed = np.zeros(nbr_iterations)
