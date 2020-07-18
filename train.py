@@ -66,7 +66,8 @@ def train(args):
     
     # The total number of iterations and when the static network should start being refined
     nbr_iterations = 10000
-    t0_dilation_net = 5000
+    # t0_dilation_net = 5000
+    t0_dilation_net = 10
 
     im_size = [512, 512]
     # image_mean = [72.39,82.91,73.16] # the mean is automatically subtracted in some modules e.g. flownet2, so be careful
@@ -109,6 +110,8 @@ def train(args):
         static_input = tf.placeholder(tf.float32)
         static_network = dilation10network()
         static_output = static_network.get_output_tensor(static_input, im_size)
+
+        unary_opt, unary_dLdy = static_network.get_optimizer(static_input, static_output, static_learning_rate)
 
     data_loader = DataLoader(im_size, args.frames) # arg.frames is how many frames to use
 
@@ -209,7 +212,7 @@ def train(args):
             if training_it > 0 and (training_it+1) % 1000 == 0:
                 saver.save(sess, './checkpoints/%s_%s_it%d' % (args.static, args.flow, training_it+1))
 
-            if (training_it+1) % 200 == 0:
+            if (training_it+1) % 100 == 0:
                 print("Iteration %d/%d: Loss %.3f" % (training_it+1, nbr_iterations, loss_history_smoothed[training_it]))
 
 if __name__ == '__main__':
