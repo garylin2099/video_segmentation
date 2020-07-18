@@ -166,28 +166,28 @@ class Flownet2:
         blobs['predict_flow5'] = tf.pad(blobs['concat5'], [[0,0], [1,1], [1,1], [0,0]])
         blobs['predict_flow5'] = tf.nn.conv2d(blobs['predict_flow5'], self.weights['Convolution2_w'], strides=[1,1,1,1], padding="VALID") + self.weights['Convolution2_b']
         
-        blobs['deconv4'] = tf.nn.conv2d_transpose(blobs['concat5'], self.weights['deconv4_w'], output_shape=[batch_size, ADAPTED_HEIGHT/16, ADAPTED_WIDTH/16, 256], strides=[1,2,2,1]) + self.weights['deconv4_b']
+        blobs['deconv4'] = tf.nn.conv2d_transpose(blobs['concat5'], self.weights['deconv4_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/16), tf.to_int32(ADAPTED_WIDTH/16), 256], strides=[1,2,2,1]) + self.weights['deconv4_b']
         blobs['deconv4'] = self.leaky_relu(blobs['deconv4'], 0.1)
         
-        blobs['upsampled_flow5_to_4'] = tf.nn.conv2d_transpose(blobs['predict_flow5'], self.weights['upsample_flow5to4_w'], output_shape=[batch_size, ADAPTED_HEIGHT/16, ADAPTED_WIDTH/16, 2], strides=[1,2,2,1]) + self.weights['upsample_flow5to4_b']
+        blobs['upsampled_flow5_to_4'] = tf.nn.conv2d_transpose(blobs['predict_flow5'], self.weights['upsample_flow5to4_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/16), tf.to_int32(ADAPTED_WIDTH/16), 2], strides=[1,2,2,1]) + self.weights['upsample_flow5to4_b']
         
         blobs['concat4'] = tf.concat([blobs['conv4_1'], blobs['deconv4'], blobs['upsampled_flow5_to_4']], axis=3)
 
         blobs['predict_flow4'] = tf.nn.conv2d(blobs['concat4'], self.weights['Convolution3_w'], strides=[1,1,1,1], padding="SAME") + self.weights['Convolution3_b']
         
-        blobs['deconv3'] = tf.nn.conv2d_transpose(blobs['concat4'], self.weights['deconv3_w'], output_shape=[batch_size, ADAPTED_HEIGHT/8, ADAPTED_WIDTH/8, 128], strides=[1,2,2,1]) + self.weights['deconv3_b']
+        blobs['deconv3'] = tf.nn.conv2d_transpose(blobs['concat4'], self.weights['deconv3_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/8), tf.to_int32(ADAPTED_WIDTH/8), 128], strides=[1,2,2,1]) + self.weights['deconv3_b']
         blobs['deconv3'] = self.leaky_relu(blobs['deconv3'], 0.1)
         
-        blobs['upsampled_flow4_to_3'] = tf.nn.conv2d_transpose(blobs['predict_flow4'], self.weights['upsample_flow4to3_w'], output_shape=[batch_size, ADAPTED_HEIGHT/8, ADAPTED_WIDTH/8, 2], strides=[1,2,2,1]) + self.weights['upsample_flow4to3_b']
+        blobs['upsampled_flow4_to_3'] = tf.nn.conv2d_transpose(blobs['predict_flow4'], self.weights['upsample_flow4to3_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/8), tf.to_int32(ADAPTED_WIDTH/8), 2], strides=[1,2,2,1]) + self.weights['upsample_flow4to3_b']
         
         blobs['concat3'] = tf.concat([blobs['conv3_1'], blobs['deconv3'], blobs['upsampled_flow4_to_3']], axis=3)
 
         blobs['predict_flow3'] = tf.nn.conv2d(blobs['concat3'], self.weights['Convolution4_w'], strides=[1,1,1,1], padding="SAME") + self.weights['Convolution4_b']
         
-        blobs['deconv2'] = tf.nn.conv2d_transpose(blobs['concat3'], self.weights['deconv2_w'], output_shape=[batch_size, ADAPTED_HEIGHT/4, ADAPTED_WIDTH/4, 64], strides=[1,2,2,1]) + self.weights['deconv2_b']
+        blobs['deconv2'] = tf.nn.conv2d_transpose(blobs['concat3'], self.weights['deconv2_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/4), tf.to_int32(ADAPTED_WIDTH/4), 64], strides=[1,2,2,1]) + self.weights['deconv2_b']
         blobs['deconv2'] = self.leaky_relu(blobs['deconv2'], 0.1)
 
-        blobs['upsampled_flow3_to_2'] = tf.nn.conv2d_transpose(blobs['predict_flow3'], self.weights['upsample_flow3to2_w'], output_shape=[batch_size, ADAPTED_HEIGHT/4, ADAPTED_WIDTH/4, 2], strides=[1,2,2,1]) + self.weights['upsample_flow3to2_b']
+        blobs['upsampled_flow3_to_2'] = tf.nn.conv2d_transpose(blobs['predict_flow3'], self.weights['upsample_flow3to2_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/4), tf.to_int32(ADAPTED_WIDTH/4), 2], strides=[1,2,2,1]) + self.weights['upsample_flow3to2_b']
 
         blobs['concat2'] = tf.concat([blobs['conv2a'], blobs['deconv2'], blobs['upsampled_flow3_to_2']], axis=3)
 
@@ -255,37 +255,37 @@ class Flownet2:
         
         blobs['blob58'] = tf.nn.conv2d(blobs['blob57'], self.weights['net2_predict_conv6_w'], strides=[1,1,1,1], padding="SAME") + self.weights['net2_predict_conv6_b']
         
-        blobs['blob59'] = tf.nn.conv2d_transpose(blobs['blob57'], self.weights['net2_deconv5_w'], output_shape=[batch_size, ADAPTED_HEIGHT/32, ADAPTED_WIDTH/32, 512], strides=[1,2,2,1]) + self.weights['net2_deconv5_b']
+        blobs['blob59'] = tf.nn.conv2d_transpose(blobs['blob57'], self.weights['net2_deconv5_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/32), tf.to_int32(ADAPTED_WIDTH/32), 512], strides=[1,2,2,1]) + self.weights['net2_deconv5_b']
         blobs['blob59'] = self.leaky_relu(blobs['blob59'], 0.1)
         
-        blobs['blob60'] = tf.nn.conv2d_transpose(blobs['predict_flow6'], self.weights['net2_net2_upsample_flow6to5_w'], output_shape=[batch_size, ADAPTED_HEIGHT/32, ADAPTED_WIDTH/32, 2], strides=[1,2,2,1]) + self.weights['net2_net2_upsample_flow6to5_b']
+        blobs['blob60'] = tf.nn.conv2d_transpose(blobs['predict_flow6'], self.weights['net2_net2_upsample_flow6to5_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/32), tf.to_int32(ADAPTED_WIDTH/32), 2], strides=[1,2,2,1]) + self.weights['net2_net2_upsample_flow6to5_b']
         
         blobs['blob61'] = tf.concat([blobs['blob55'], blobs['blob59'], blobs['blob60']], axis=3)
 
         blobs['blob62'] = tf.nn.conv2d(blobs['blob61'], self.weights['net2_predict_conv5_w'], strides=[1,1,1,1], padding="SAME") + self.weights['net2_predict_conv5_b']
         
-        blobs['blob63'] = tf.nn.conv2d_transpose(blobs['blob61'], self.weights['net2_deconv4_w'], output_shape=[batch_size, ADAPTED_HEIGHT/16, ADAPTED_WIDTH/16, 256], strides=[1,2,2,1]) + self.weights['net2_deconv4_b']
+        blobs['blob63'] = tf.nn.conv2d_transpose(blobs['blob61'], self.weights['net2_deconv4_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/16), tf.to_int32(ADAPTED_WIDTH/16), 256], strides=[1,2,2,1]) + self.weights['net2_deconv4_b']
         blobs['blob63'] = self.leaky_relu(blobs['blob63'], 0.1)
         
-        blobs['blob64'] = tf.nn.conv2d_transpose(blobs['blob62'], self.weights['net2_net2_upsample_flow5to4_w'], output_shape=[batch_size, ADAPTED_HEIGHT/16, ADAPTED_WIDTH/16, 2], strides=[1,2,2,1]) + self.weights['net2_net2_upsample_flow5to4_b']
+        blobs['blob64'] = tf.nn.conv2d_transpose(blobs['blob62'], self.weights['net2_net2_upsample_flow5to4_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/16), tf.to_int32(ADAPTED_WIDTH/16), 2], strides=[1,2,2,1]) + self.weights['net2_net2_upsample_flow5to4_b']
         
         blobs['blob65'] = tf.concat([blobs['blob53'], blobs['blob63'], blobs['blob64']], axis=3)
         
         blobs['blob66'] = tf.nn.conv2d(blobs['blob65'], self.weights['net2_predict_conv4_w'], strides=[1,1,1,1], padding="SAME") + self.weights['net2_predict_conv4_b']
         
-        blobs['blob67'] = tf.nn.conv2d_transpose(blobs['blob65'], self.weights['net2_deconv3_w'], output_shape=[batch_size, ADAPTED_HEIGHT/8, ADAPTED_WIDTH/8, 128], strides=[1,2,2,1]) + self.weights['net2_deconv3_b']
+        blobs['blob67'] = tf.nn.conv2d_transpose(blobs['blob65'], self.weights['net2_deconv3_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/8), tf.to_int32(ADAPTED_WIDTH/8), 128], strides=[1,2,2,1]) + self.weights['net2_deconv3_b']
         blobs['blob67'] = self.leaky_relu(blobs['blob67'], 0.1)
         
-        blobs['blob68'] = tf.nn.conv2d_transpose(blobs['blob66'], self.weights['net2_net2_upsample_flow4to3_w'], output_shape=[batch_size, ADAPTED_HEIGHT/8, ADAPTED_WIDTH/8, 2], strides=[1,2,2,1]) + self.weights['net2_net2_upsample_flow4to3_b']
+        blobs['blob68'] = tf.nn.conv2d_transpose(blobs['blob66'], self.weights['net2_net2_upsample_flow4to3_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/8), tf.to_int32(ADAPTED_WIDTH/8), 2], strides=[1,2,2,1]) + self.weights['net2_net2_upsample_flow4to3_b']
         
         blobs['blob69'] = tf.concat([blobs['blob51'], blobs['blob67'], blobs['blob68']], axis=3)
 
         blobs['blob70'] = tf.nn.conv2d(blobs['blob69'], self.weights['net2_predict_conv3_w'], strides=[1,1,1,1], padding="SAME") + self.weights['net2_predict_conv3_b']
         
-        blobs['blob71'] = tf.nn.conv2d_transpose(blobs['blob69'], self.weights['net2_deconv2_w'], output_shape=[batch_size, ADAPTED_HEIGHT/4, ADAPTED_WIDTH/4, 64], strides=[1,2,2,1]) + self.weights['net2_deconv2_b']
+        blobs['blob71'] = tf.nn.conv2d_transpose(blobs['blob69'], self.weights['net2_deconv2_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/4), tf.to_int32(ADAPTED_WIDTH/4), 64], strides=[1,2,2,1]) + self.weights['net2_deconv2_b']
         blobs['blob71'] = self.leaky_relu(blobs['blob71'], 0.1)
 
-        blobs['blob72'] = tf.nn.conv2d_transpose(blobs['blob70'], self.weights['net2_net2_upsample_flow3to2_w'], output_shape=[batch_size, ADAPTED_HEIGHT/4, ADAPTED_WIDTH/4, 2], strides=[1,2,2,1]) + self.weights['net2_net2_upsample_flow3to2_b']
+        blobs['blob72'] = tf.nn.conv2d_transpose(blobs['blob70'], self.weights['net2_net2_upsample_flow3to2_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/4), tf.to_int32(ADAPTED_WIDTH/4), 2], strides=[1,2,2,1]) + self.weights['net2_net2_upsample_flow3to2_b']
 
         blobs['blob73'] = tf.concat([blobs['blob49'], blobs['blob71'], blobs['blob72']], axis=3)
 
@@ -353,37 +353,37 @@ class Flownet2:
         
         blobs['blob92'] = tf.nn.conv2d(blobs['blob91'], self.weights['net3_predict_conv6_w'], strides=[1,1,1,1], padding="SAME") + self.weights['net3_predict_conv6_b']
         
-        blobs['blob93'] = tf.nn.conv2d_transpose(blobs['blob91'], self.weights['net3_deconv5_w'], output_shape=[batch_size, ADAPTED_HEIGHT/32, ADAPTED_WIDTH/32, 512], strides=[1,2,2,1]) + self.weights['net3_deconv5_b']
+        blobs['blob93'] = tf.nn.conv2d_transpose(blobs['blob91'], self.weights['net3_deconv5_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/32), tf.to_int32(ADAPTED_WIDTH/32), 512], strides=[1,2,2,1]) + self.weights['net3_deconv5_b']
         blobs['blob93'] = self.leaky_relu(blobs['blob93'], 0.1)
         
-        blobs['blob94'] = tf.nn.conv2d_transpose(blobs['blob92'], self.weights['net3_net3_upsample_flow6to5_w'], output_shape=[batch_size, ADAPTED_HEIGHT/32, ADAPTED_WIDTH/32, 2], strides=[1,2,2,1]) + self.weights['net3_net3_upsample_flow6to5_b']
+        blobs['blob94'] = tf.nn.conv2d_transpose(blobs['blob92'], self.weights['net3_net3_upsample_flow6to5_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/32), tf.to_int32(ADAPTED_WIDTH/32), 2], strides=[1,2,2,1]) + self.weights['net3_net3_upsample_flow6to5_b']
         
         blobs['blob95'] = tf.concat([blobs['blob89'], blobs['blob93'], blobs['blob94']], axis=3)
 
         blobs['blob96'] = tf.nn.conv2d(blobs['blob95'], self.weights['net3_predict_conv5_w'], strides=[1,1,1,1], padding="SAME") + self.weights['net3_predict_conv5_b']
         
-        blobs['blob97'] = tf.nn.conv2d_transpose(blobs['blob95'], self.weights['net3_deconv4_w'], output_shape=[batch_size, ADAPTED_HEIGHT/16, ADAPTED_WIDTH/16, 256], strides=[1,2,2,1]) + self.weights['net3_deconv4_b']
+        blobs['blob97'] = tf.nn.conv2d_transpose(blobs['blob95'], self.weights['net3_deconv4_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/16), tf.to_int32(ADAPTED_WIDTH/16), 256], strides=[1,2,2,1]) + self.weights['net3_deconv4_b']
         blobs['blob97'] = self.leaky_relu(blobs['blob97'], 0.1)
         
-        blobs['blob98'] = tf.nn.conv2d_transpose(blobs['blob96'], self.weights['net3_net3_upsample_flow5to4_w'], output_shape=[batch_size, ADAPTED_HEIGHT/16, ADAPTED_WIDTH/16, 2], strides=[1,2,2,1]) + self.weights['net3_net3_upsample_flow5to4_b']
+        blobs['blob98'] = tf.nn.conv2d_transpose(blobs['blob96'], self.weights['net3_net3_upsample_flow5to4_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/16), tf.to_int32(ADAPTED_WIDTH/16), 2], strides=[1,2,2,1]) + self.weights['net3_net3_upsample_flow5to4_b']
         
         blobs['blob99'] = tf.concat([blobs['blob87'], blobs['blob97'], blobs['blob98']], axis=3)
         
         blobs['blob100'] = tf.nn.conv2d(blobs['blob99'], self.weights['net3_predict_conv4_w'], strides=[1,1,1,1], padding="SAME") + self.weights['net3_predict_conv4_b']
         
-        blobs['blob101'] = tf.nn.conv2d_transpose(blobs['blob99'], self.weights['net3_deconv3_w'], output_shape=[batch_size, ADAPTED_HEIGHT/8, ADAPTED_WIDTH/8, 128], strides=[1,2,2,1]) + self.weights['net3_deconv3_b']
+        blobs['blob101'] = tf.nn.conv2d_transpose(blobs['blob99'], self.weights['net3_deconv3_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/8), tf.to_int32(ADAPTED_WIDTH/8), 128], strides=[1,2,2,1]) + self.weights['net3_deconv3_b']
         blobs['blob101'] = self.leaky_relu(blobs['blob101'], 0.1)
         
-        blobs['blob102'] = tf.nn.conv2d_transpose(blobs['blob100'], self.weights['net3_net3_upsample_flow4to3_w'], output_shape=[batch_size, ADAPTED_HEIGHT/8, ADAPTED_WIDTH/8, 2], strides=[1,2,2,1]) + self.weights['net3_net3_upsample_flow4to3_b']
+        blobs['blob102'] = tf.nn.conv2d_transpose(blobs['blob100'], self.weights['net3_net3_upsample_flow4to3_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/8), tf.to_int32(ADAPTED_WIDTH/8), 2], strides=[1,2,2,1]) + self.weights['net3_net3_upsample_flow4to3_b']
         
         blobs['blob103'] = tf.concat([blobs['blob85'], blobs['blob101'], blobs['blob102']], axis=3)
 
         blobs['blob104'] = tf.nn.conv2d(blobs['blob103'], self.weights['net3_predict_conv3_w'], strides=[1,1,1,1], padding="SAME") + self.weights['net3_predict_conv3_b']
         
-        blobs['blob105'] = tf.nn.conv2d_transpose(blobs['blob103'], self.weights['net3_deconv2_w'], output_shape=[batch_size, ADAPTED_HEIGHT/4, ADAPTED_WIDTH/4, 64], strides=[1,2,2,1]) + self.weights['net3_deconv2_b']
+        blobs['blob105'] = tf.nn.conv2d_transpose(blobs['blob103'], self.weights['net3_deconv2_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/4), tf.to_int32(ADAPTED_WIDTH/4), 64], strides=[1,2,2,1]) + self.weights['net3_deconv2_b']
         blobs['blob105'] = self.leaky_relu(blobs['blob105'], 0.1)
 
-        blobs['blob106'] = tf.nn.conv2d_transpose(blobs['blob104'], self.weights['net3_net3_upsample_flow3to2_w'], output_shape=[batch_size, ADAPTED_HEIGHT/4, ADAPTED_WIDTH/4, 2], strides=[1,2,2,1]) + self.weights['net3_net3_upsample_flow3to2_b']
+        blobs['blob106'] = tf.nn.conv2d_transpose(blobs['blob104'], self.weights['net3_net3_upsample_flow3to2_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/4), tf.to_int32(ADAPTED_WIDTH/4), 2], strides=[1,2,2,1]) + self.weights['net3_net3_upsample_flow3to2_b']
 
         blobs['blob107'] = tf.concat([blobs['blob83'], blobs['blob105'], blobs['blob106']], axis=3)
 
@@ -449,10 +449,10 @@ class Flownet2:
 
         blobs['blob124'] = tf.nn.conv2d(blobs['blob123'], self.weights['netsd_Convolution1_w'], strides=[1,1,1,1], padding="SAME") + self.weights['netsd_Convolution1_b']
         
-        blobs['blob125'] = tf.nn.conv2d_transpose(blobs['blob123'], self.weights['netsd_deconv5_w'], output_shape=[batch_size, ADAPTED_HEIGHT/32, ADAPTED_WIDTH/32, 512], strides=[1,2,2,1]) + self.weights['netsd_deconv5_b']
+        blobs['blob125'] = tf.nn.conv2d_transpose(blobs['blob123'], self.weights['netsd_deconv5_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/32), tf.to_int32(ADAPTED_WIDTH/32), 512], strides=[1,2,2,1]) + self.weights['netsd_deconv5_b']
         blobs['blob125'] = self.leaky_relu(blobs['blob125'], 0.1)
         
-        blobs['blob126'] = tf.nn.conv2d_transpose(blobs['blob124'], self.weights['netsd_upsample_flow6to5_w'], output_shape=[batch_size, ADAPTED_HEIGHT/32, ADAPTED_WIDTH/32, 2], strides=[1,2,2,1]) + self.weights['netsd_upsample_flow6to5_b']
+        blobs['blob126'] = tf.nn.conv2d_transpose(blobs['blob124'], self.weights['netsd_upsample_flow6to5_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/32), tf.to_int32(ADAPTED_WIDTH/32), 2], strides=[1,2,2,1]) + self.weights['netsd_upsample_flow6to5_b']
         
         blobs['blob127'] = tf.concat([blobs['blob121'], blobs['blob125'], blobs['blob126']], axis=3)
 
@@ -460,10 +460,10 @@ class Flownet2:
         
         blobs['blob129'] = tf.nn.conv2d(blobs['blob128'], self.weights['netsd_Convolution2_w'], strides=[1,1,1,1], padding="SAME") + self.weights['netsd_Convolution2_b']
 
-        blobs['blob130'] = tf.nn.conv2d_transpose(blobs['blob127'], self.weights['netsd_deconv4_w'], output_shape=[batch_size, ADAPTED_HEIGHT/16, ADAPTED_WIDTH/16, 256], strides=[1,2,2,1]) + self.weights['netsd_deconv4_b']
+        blobs['blob130'] = tf.nn.conv2d_transpose(blobs['blob127'], self.weights['netsd_deconv4_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/16), tf.to_int32(ADAPTED_WIDTH/16), 256], strides=[1,2,2,1]) + self.weights['netsd_deconv4_b']
         blobs['blob130'] = self.leaky_relu(blobs['blob130'], 0.1)
         
-        blobs['blob131'] = tf.nn.conv2d_transpose(blobs['blob129'], self.weights['netsd_upsample_flow5to4_w'], output_shape=[batch_size, ADAPTED_HEIGHT/16, ADAPTED_WIDTH/16, 2], strides=[1,2,2,1]) + self.weights['netsd_upsample_flow5to4_b']
+        blobs['blob131'] = tf.nn.conv2d_transpose(blobs['blob129'], self.weights['netsd_upsample_flow5to4_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/16), tf.to_int32(ADAPTED_WIDTH/16), 2], strides=[1,2,2,1]) + self.weights['netsd_upsample_flow5to4_b']
         
         blobs['blob132'] = tf.concat([blobs['blob119'], blobs['blob130'], blobs['blob131']], axis=3)
         
@@ -471,10 +471,10 @@ class Flownet2:
         
         blobs['blob134'] = tf.nn.conv2d(blobs['blob133'], self.weights['netsd_Convolution3_w'], strides=[1,1,1,1], padding="SAME") + self.weights['netsd_Convolution3_b']
 
-        blobs['blob135'] = tf.nn.conv2d_transpose(blobs['blob132'], self.weights['netsd_deconv3_w'], output_shape=[batch_size, ADAPTED_HEIGHT/8, ADAPTED_WIDTH/8, 128], strides=[1,2,2,1]) + self.weights['netsd_deconv3_b']
+        blobs['blob135'] = tf.nn.conv2d_transpose(blobs['blob132'], self.weights['netsd_deconv3_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/8), tf.to_int32(ADAPTED_WIDTH/8), 128], strides=[1,2,2,1]) + self.weights['netsd_deconv3_b']
         blobs['blob135'] = self.leaky_relu(blobs['blob135'], 0.1)
         
-        blobs['blob136'] = tf.nn.conv2d_transpose(blobs['blob134'], self.weights['netsd_upsample_flow4to3_w'], output_shape=[batch_size, ADAPTED_HEIGHT/8, ADAPTED_WIDTH/8, 2], strides=[1,2,2,1]) + self.weights['netsd_upsample_flow4to3_b']
+        blobs['blob136'] = tf.nn.conv2d_transpose(blobs['blob134'], self.weights['netsd_upsample_flow4to3_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/8), ADAPTED_WIDTH/8, 2], strides=[1,2,2,1]) + self.weights['netsd_upsample_flow4to3_b']
         
         blobs['blob137'] = tf.concat([blobs['blob117'], blobs['blob135'], blobs['blob136']], axis=3)
 
@@ -482,10 +482,10 @@ class Flownet2:
         
         blobs['blob139'] = tf.nn.conv2d(blobs['blob138'], self.weights['netsd_Convolution4_w'], strides=[1,1,1,1], padding="SAME") + self.weights['netsd_Convolution4_b']
 
-        blobs['blob140'] = tf.nn.conv2d_transpose(blobs['blob137'], self.weights['netsd_deconv2_w'], output_shape=[batch_size, ADAPTED_HEIGHT/4, ADAPTED_WIDTH/4, 64], strides=[1,2,2,1]) + self.weights['netsd_deconv2_b']
+        blobs['blob140'] = tf.nn.conv2d_transpose(blobs['blob137'], self.weights['netsd_deconv2_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/4), tf.to_int32(ADAPTED_WIDTH/4), 64], strides=[1,2,2,1]) + self.weights['netsd_deconv2_b']
         blobs['blob140'] = self.leaky_relu(blobs['blob140'], 0.1)
 
-        blobs['blob141'] = tf.nn.conv2d_transpose(blobs['blob139'], self.weights['netsd_upsample_flow3to2_w'], output_shape=[batch_size, ADAPTED_HEIGHT/4, ADAPTED_WIDTH/4, 2], strides=[1,2,2,1]) + self.weights['netsd_upsample_flow3to2_b']
+        blobs['blob141'] = tf.nn.conv2d_transpose(blobs['blob139'], self.weights['netsd_upsample_flow3to2_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/4), tf.to_int32(ADAPTED_WIDTH/4), 2], strides=[1,2,2,1]) + self.weights['netsd_upsample_flow3to2_b']
 
         blobs['blob142'] = tf.concat([blobs['blob115'], blobs['blob140'], blobs['blob141']], axis=3)
 
@@ -540,10 +540,10 @@ class Flownet2:
         
         blobs['blob162'] = tf.nn.conv2d(blobs['blob161'], self.weights['fuse__Convolution5_w'], strides=[1,1,1,1], padding="SAME") + self.weights['fuse__Convolution5_b']
         
-        blobs['blob163'] = tf.nn.conv2d_transpose(blobs['blob161'], self.weights['fuse_deconv1_w'], output_shape=[batch_size, ADAPTED_HEIGHT/2, ADAPTED_WIDTH/2, 32], strides=[1,2,2,1]) + self.weights['fuse_deconv1_b']
+        blobs['blob163'] = tf.nn.conv2d_transpose(blobs['blob161'], self.weights['fuse_deconv1_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/2), tf.to_int32(ADAPTED_WIDTH/2), 32], strides=[1,2,2,1]) + self.weights['fuse_deconv1_b']
         blobs['blob163'] = self.leaky_relu(blobs['blob163'], 0.1)
 
-        blobs['blob164'] = tf.nn.conv2d_transpose(blobs['blob162'], self.weights['fuse_upsample_flow2to1_w'], output_shape=[batch_size, ADAPTED_HEIGHT/2, ADAPTED_WIDTH/2, 2], strides=[1,2,2,1]) + self.weights['fuse_upsample_flow2to1_b']
+        blobs['blob164'] = tf.nn.conv2d_transpose(blobs['blob162'], self.weights['fuse_upsample_flow2to1_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/2), tf.to_int32(ADAPTED_WIDTH/2), 2], strides=[1,2,2,1]) + self.weights['fuse_upsample_flow2to1_b']
 
         blobs['blob165'] = tf.concat([blobs['blob159'], blobs['blob163'], blobs['blob164']], axis=3)
 
@@ -551,7 +551,7 @@ class Flownet2:
         
         blobs['blob167'] = tf.nn.conv2d(blobs['blob166'], self.weights['fuse__Convolution6_w'], strides=[1,1,1,1], padding="SAME") + self.weights['fuse__Convolution6_b']
 
-        blobs['blob168'] = tf.nn.conv2d_transpose(blobs['blob165'], self.weights['fuse_deconv0_w'], output_shape=[batch_size, ADAPTED_HEIGHT/1, ADAPTED_WIDTH/1, 16], strides=[1,2,2,1]) + self.weights['fuse_deconv0_b']
+        blobs['blob168'] = tf.nn.conv2d_transpose(blobs['blob165'], self.weights['fuse_deconv0_w'], output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/1), tf.to_int32(ADAPTED_WIDTH/1), 16], strides=[1,2,2,1]) + self.weights['fuse_deconv0_b']
         blobs['blob168'] = self.leaky_relu(blobs['blob168'], 0.1)
 
         blobs['blob169'] = tf.nn.conv2d_transpose(blobs['blob167'], self.weights['fuse_upsample_flow1to0_w'], output_shape=[batch_size, ADAPTED_HEIGHT, ADAPTED_WIDTH, 2], strides=[1,2,2,1]) + self.weights['fuse_upsample_flow1to0_b']
