@@ -86,8 +86,10 @@ class STGRU:
         # apply softmax to h_prev and unary_input
         h_prev = self.softmax_last_dim(h_prev)
         unary_input = self.softmax_last_dim(unary_input)
-        h_prev = h_prev - 1./19
-        unary_input = unary_input - 1./19
+        # h_prev = h_prev - 1./19
+        h_prev = h_prev - 1./7
+        # unary_input = unary_input - 1./19
+        unary_input = unary_input - 1./7
 
         I_diff = input_image - self.bilinear_warping_module.bilinear_warping(prev_image, flow_input)
         
