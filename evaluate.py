@@ -1,7 +1,7 @@
 import argparse, glob, os, cv2, sys, pickle
 import numpy as np
 import tensorflow as tf
-import config as cfg
+# import config as cfg
 from models.stgru import STGRU
 from models.lrr import LRR
 from models.dilation import dilation10network
@@ -9,8 +9,10 @@ from models.flownet2 import Flownet2
 from models.flownet1 import Flownet1
 from tensorflow.python.framework import ops
 
-sys.path.insert(0, os.path.join(cfg.cityscapes_scripts_root, 'evaluation'))
-import evalPixelLevelSemanticLabeling
+# sys.path.insert(0, os.path.join(cfg.cityscapes_scripts_root, 'evaluation'))
+# import evalPixelLevelSemanticLabeling
+
+from constants import *
 
 bilinear_warping_module = tf.load_op_library('./misc/bilinear_warping.so')
 @ops.RegisterGradient("BilinearWarping")
@@ -19,13 +21,16 @@ def _BilinearWarping(op, grad):
 
 def evaluate(args):
     data_split = 'val'
+    # nbr_classes = 19
     nbr_classes = 19
-    im_size = [1024, 2048]
-    image_mean = [72.39,82.91,73.16] # the mean is automatically subtracted in some modules e.g. flownet2, so be careful
+    # im_size = [1024, 2048]
+    im_size = [512, 512]
+    # image_mean = [72.39,82.91,73.16] # the mean is automatically subtracted in some modules e.g. flownet2, so be careful
+    image_mean = [0, 0, 0]
 
-    f = open('misc/cityscapes_labels.pckl')
-    cs_id2trainid, cs_id2name = pickle.load(f)
-    f.close()
+    # f = open('misc/cityscapes_labels.pckl')
+    # cs_id2trainid, cs_id2name = pickle.load(f)
+    # f.close()
 
     assert args.static in ['dilation', 'lrr'], "Only dilation and LRR are supported for now."
     
@@ -62,7 +67,7 @@ def evaluate(args):
         saver_fn = tf.train.Saver([k for k in tf.global_variables() if k.name.startswith('flow/')])
 
     with tf.Session() as sess:
-        if args.ckpt != '':
+        if args.ckpt != '': # load checkpoints models saved in training
             saver.restore(sess, './checkpoints/%s' % (args.ckpt))
         else:
             if args.static == 'lrr':
@@ -75,19 +80,23 @@ def evaluate(args):
         elif args.flow == 'flownet2':
             saver_fn.restore(sess, './checkpoints/flownet2')
 
-        L = glob.glob(os.path.join(cfg.cityscapes_dir, 'gtFine', data_split, "*", "*labelIds.png"))
+        # L = glob.glob(os.path.join(cfg.cityscapes_dir, 'gtFine', data_split, "*", "*labelIds.png"))
+        L = glob.glob(os.path.join(VD_VALIDATION_PATH, "*.png"))
         for (progress_counter, im_path) in enumerate(L):
             parts = im_path.split('/')[-1].split('_')
-            city, seq, frame = parts[0], parts[1], parts[2]
+            # city, seq, frame = parts[0], parts[1], parts[2]
+            seq, frame = parts[0], parts[2]
 
             print("Processing sequence %d/%d" % (progress_counter+1, len(L)))
             for dt in range(-args.frames + 1, 1):
                 first_frame = dt == -args.frames + 1
                 t = int(frame) + dt
                 
-                frame_path = os.path.join(cfg.cityscapes_video_dir, 'leftImg8bit_sequence', data_split, 
-                        city, ("%s_%s_%06d_leftImg8bit.png" % (city, seq, t)))
-                im = cv2.imread(frame_path, 1).astype(np.float32)[np.newaxis,...]
+                # frame_path = os.path.join(cfg.cityscapes_video_dir, 'leftImg8bit_sequence', data_split, 
+                #         city, ("%s_%s_%06d_leftImg8bit.png" % (city, seq, t)))
+                # im = cv2.imread(frame_path, 1).astype(np.float32)[np.newaxis,...]
+                frame_path = os.path.join(VD_VALIDATION_PATH, ("%s_02_%02d_2020_cal.jpg" % (seq, t)))
+                im = cv2.imread(frame_path, 1).astype(np.float32)[np.newaxis,...] # seems to be channel dimension first
 
                 # Compute optical flow
                 if not first_frame:
@@ -134,15 +143,17 @@ def evaluate(args):
             # save it
             S = pred[0]
             S_new = S.copy()
-            for (idx, train_idx) in cs_id2trainid.iteritems():
-                S_new[S == train_idx] = idx
+            # for (idx, train_idx) in cs_id2trainid.iteritems():
+            #     S_new[S == train_idx] = idx
 
-            output_path = '%s_%s_%s.png' % (city, seq, frame)
-            cv2.imwrite(os.path.join(cfg.cityscapes_dir, 'results', output_path), S_new)
+            # output_path = '%s_%s_%s.png' % (city, seq, frame)
+            output_path = '%s_02_%s_pred.png' % (seq, frame)
+            # cv2.imwrite(os.path.join(cfg.cityscapes_dir, 'results', output_path), S_new)
+            cv2.imwrite(os.path.join('./pred_mask', output_path), S_new)
 
 
-        # Evaluate using the official CityScapes code
-        evalPixelLevelSemanticLabeling.main([])
+        # # Evaluate using the official CityScapes code
+        # evalPixelLevelSemanticLabeling.main([])
 
 
 
