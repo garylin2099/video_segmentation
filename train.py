@@ -65,7 +65,7 @@ def train(args):
     static_learning_rate = 2e-12
     
     # The total number of iterations and when the static network should start being refined
-    nbr_iterations = 10000
+    nbr_iterations = 1000
     # t0_dilation_net = 5000
     t0_dilation_net = 10
 
@@ -214,6 +214,9 @@ def train(args):
 
             if (training_it+1) % 100 == 0:
                 print("Iteration %d/%d: Loss %.3f" % (training_it+1, nbr_iterations, loss_history_smoothed[training_it]))
+
+        loss_hist_file = np.asarray(loss_history)
+        np.savetxt("./loss_hist/loss_hist_%s_%s_it%d.csv" % (args.static, args.flow, nbr_iterations), loss_hist_file, delimiter=",")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Tran GRFP on the CityScapes training set.')
