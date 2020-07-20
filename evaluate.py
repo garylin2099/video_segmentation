@@ -151,6 +151,7 @@ def evaluate(args):
             # for (idx, train_idx) in cs_id2trainid.iteritems():
             #     S_new[S == train_idx] = idx
             # print(S_new * 40)
+            print("final")
             print(np.unique(S_new))
 
             # output_path = '%s_%s_%s.png' % (city, seq, frame)

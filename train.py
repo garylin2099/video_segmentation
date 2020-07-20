@@ -24,7 +24,7 @@ class DataLoader():
         self.nbr_frames = nbr_frames
         # self.L = glob.glob(os.path.join(cfg.cityscapes_dir, 'gtFine', 'train', "*", "*labelTrainIds.png"))
         self.L = glob.glob(os.path.join(VD_TRAIN_PATH, "*.png"))
-        random.shuffle(self.L)
+        # random.shuffle(self.L)
         self.idx = 0
 
     def get_next_sequence(self):
@@ -37,8 +37,8 @@ class DataLoader():
         # i1, j1 = i0 + h, j0 + w
 
         # shuffle at each new epoch
-        if self.idx % len(self.L) == 0:
-            random.shuffle(self.L)
+        # if (self.idx + 1) % len(self.L) == 0:
+            # random.shuffle(self.L)
 
         im_path = self.L[self.idx % len(self.L)] # the gt path, later split into image path
         self.idx += 1
@@ -67,12 +67,13 @@ def train(args):
 
     # learning rates for the GRU and the static segmentation networks, respectively
     # learning_rate = 2e-5 # original paper
-    learning_rate = 0.1
+    learning_rate = 1
     # static_learning_rate = 2e-12 # original paper
-    static_learning_rate = 0.1
+    # static_learning_rate = 0.1
+    static_learning_rate_lrr = 1
     
     # The total number of iterations and when the static network should start being refined
-    nbr_iterations = 1000
+    nbr_iterations = 6000
     # t0_dilation_net = 5000
     t0_dilation_net = 0
 
@@ -112,6 +113,8 @@ def train(args):
         static_network = LRR()
         static_output = static_network(static_input)
 
+        static_learning_rate = tf.placeholder(tf.float32) # variable learning rate
+
         unary_opt, unary_dLdy = static_network.get_optimizer(static_input, static_output, static_learning_rate)
     elif args.static == 'dilation':
         static_input = tf.placeholder(tf.float32)
@@ -119,6 +122,10 @@ def train(args):
         static_output = static_network.get_output_tensor(static_input, im_size)
 
         # unary_opt, unary_dLdy = static_network.get_optimizer(static_input, static_output, static_learning_rate)
+
+    random.seed(5)
+    np.random.seed(5)
+    tf.compat.v1.random.set_random_seed(5)
 
     data_loader = DataLoader(im_size, args.frames) # arg.frames is how many frames to use
 
@@ -188,7 +195,7 @@ def train(args):
             # GRFP
             rnn_input = {
                 gru_learning_rate: learning_rate,
-                # gru_learning_rate: learning_rate / (training_it + 1),
+                gru_learning_rate: learning_rate * (1-(training_it+1)/nbr_iterations)**2,
                 gru_input_images_tensor: np.stack(images),
                 gru_input_flow_tensor: np.stack(optflow),
                 gru_input_segmentation_tensor: np.stack(static_segm),
@@ -215,13 +222,18 @@ def train(args):
                     _ = sess.run([unary_opt], feed_dict={
                       static_input: im,
                       unary_dLdy: g
+                      ,static_learning_rate: static_learning_rate_lrr * (1-(training_it+1)/nbr_iterations)**2
                     })
 
             if training_it > 0 and (training_it+1) % 1000 == 0:
                 saver.save(sess, './checkpoints/%s_%s_it%d' % (args.static, args.flow, training_it+1))
 
+            print(loss)
+
             if (training_it+1) % 10 == 0:
                 print("Iteration %d/%d: Loss %.3f" % (training_it+1, nbr_iterations, loss_history_smoothed[training_it]))
+                # print(loss_history_smoothed[training_it])
+                print(loss_history[training_it])
 
         loss_hist_file = np.asarray(loss_history)
         np.savetxt("./loss_hist/loss_hist_%s_%s_it%d.csv" % (args.static, args.flow, nbr_iterations), loss_hist_file, delimiter=",")
@@ -232,7 +244,7 @@ def train(args):
 def plot_loss_curve(results, title):
     plt.figure(figsize=(8, 8))
     plt.title(title)
-    print(results)
+    # print(results)
     plt.plot(range(len(results)), results, label="train_loss")
     # plt.plot(exp_val_loss, label="val_loss")
     # plt.plot(np.min(results), marker="x", color="r", label="lowest loss")
