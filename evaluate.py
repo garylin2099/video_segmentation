@@ -22,7 +22,7 @@ def _BilinearWarping(op, grad):
 def evaluate(args):
     data_split = 'val'
     # nbr_classes = 19
-    nbr_classes = 19
+    nbr_classes = 7
     # im_size = [1024, 2048]
     im_size = [512, 512]
     # image_mean = [72.39,82.91,73.16] # the mean is automatically subtracted in some modules e.g. flownet2, so be careful
