@@ -200,14 +200,14 @@ def train(args):
             # The reason that a two-stage training routine is used
             # is because there is not enough GPU memory (with a 12 GB Titan X)
             # to do it in one pass.
-            # if training_it+1 > t0_dilation_net:
-            #     for k in range(len(images)-3, len(images)):
-            #         g = unary_grads[0][k]
-            #         im = images[k]
-            #         _ = sess.run([unary_opt], feed_dict={
-            #           static_input: im,
-            #           unary_dLdy: g
-            #         })
+            if training_it+1 > t0_dilation_net:
+                for k in range(len(images)-3, len(images)):
+                    g = unary_grads[0][k]
+                    im = images[k]
+                    _ = sess.run([unary_opt], feed_dict={
+                      static_input: im,
+                      unary_dLdy: g
+                    })
 
             if training_it > 0 and (training_it+1) % 1000 == 0:
                 saver.save(sess, './checkpoints/%s_%s_it%d' % (args.static, args.flow, training_it+1))

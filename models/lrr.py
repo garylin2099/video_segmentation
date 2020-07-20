@@ -21,7 +21,7 @@ class LRR:
 
         opt = tf.train.MomentumOptimizer(learning_rate=learning_rate, momentum=0.9)
         opt = opt.minimize(loss,
-            var_list=[v for k, v in self.weights.iteritems() if not ('_bil_' in k or 'deconv' in k or 'bases' in k)])
+            var_list=[v for k, v in self.weights.items() if not ('_bil_' in k or 'deconv' in k or 'bases' in k)])
 
         return opt, dLdy
     
