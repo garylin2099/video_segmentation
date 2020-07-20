@@ -225,7 +225,7 @@ def train(args):
         loss_hist_file = np.asarray(loss_history)
         np.savetxt("./loss_hist/loss_hist_%s_%s_it%d.csv" % (args.static, args.flow, nbr_iterations), loss_hist_file, delimiter=",")
 
-        plot_loss_curve(loss_history, "%s_%s_loss_curve.csv" % (args.static, args.flow))
+        plot_loss_curve(loss_history, "%s_%s_loss_curve" % (args.static, args.flow))
 
 
 def plot_loss_curve(results, title):
