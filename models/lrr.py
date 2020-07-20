@@ -97,23 +97,23 @@ class LRR:
         blobs['coef_32x'] = tf.nn.conv2d(blobs['x37'], self.weights['bases_coef_32xf'], [1,1,1,1], padding='SAME') + self.weights['bases_coef_32xb']
 
         # groups parameter for a deconv layer is not supported in tensorflow, hacky solution below
-        blobs['prediction_32x'] = tf.concat([tf.nn.conv2d_transpose(tf.slice(blobs['coef_32x'], [0, 0, 0, 10*k], [-1, -1, -1, 10]), tf.slice(self.weights['deconv_32xf'], [0, 0, 0, 10*k], [-1, -1, -1, 10]), output_shape=[batch_size, ADAPTED_HEIGHT/8, ADAPTED_WIDTH/8, 1], strides=[1,4,4,1]) for k in range(7)], axis=3)
+        blobs['prediction_32x'] = tf.concat([tf.nn.conv2d_transpose(tf.slice(blobs['coef_32x'], [0, 0, 0, 10*k], [-1, -1, -1, 10]), tf.slice(self.weights['deconv_32xf'], [0, 0, 0, 10*k], [-1, -1, -1, 10]), output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/8), tf.to_int32(ADAPTED_WIDTH/8), 1], strides=[1,4,4,1]) for k in range(7)], axis=3)
         
 
         blobs['dil_seg32x_coef'] = tf.nn.conv2d(blobs['x37'], self.weights['dil_seg32x_coeff'], [1,1,1,1], padding='SAME') + self.weights['dil_seg32x_coefb']
 
-        blobs['dil_seg32x'] = tf.concat([tf.nn.conv2d_transpose(tf.slice(blobs['dil_seg32x_coef'], [0, 0, 0, 10*k], [-1, -1, -1, 10]), tf.slice(self.weights['dil_seg_deconv_32xf'], [0, 0, 0, 10*k], [-1, -1, -1, 10]), output_shape=[batch_size, ADAPTED_HEIGHT/8, ADAPTED_WIDTH/8, 1], strides=[1,4,4,1]) for k in range(7)], axis=3) + self.weights['dil_mask_deconv32sb']
+        blobs['dil_seg32x'] = tf.concat([tf.nn.conv2d_transpose(tf.slice(blobs['dil_seg32x_coef'], [0, 0, 0, 10*k], [-1, -1, -1, 10]), tf.slice(self.weights['dil_seg_deconv_32xf'], [0, 0, 0, 10*k], [-1, -1, -1, 10]), output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/8), tf.to_int32(ADAPTED_WIDTH/8), 1], strides=[1,4,4,1]) for k in range(7)], axis=3) + self.weights['dil_mask_deconv32sb']
 
         blobs['ero_seg32x_coef'] = tf.nn.conv2d(blobs['x37'], self.weights['ero_mask32s_coeff'], [1,1,1,1], padding='SAME') + self.weights['ero_seg32x_coefb']
 
-        blobs['ero_seg32x'] = tf.concat([tf.nn.conv2d_transpose(tf.slice(blobs['ero_seg32x_coef'], [0, 0, 0, 10*k], [-1, -1, -1, 10]), tf.slice(self.weights['ero_seg_deconv_32xf'], [0, 0, 0, 10*k], [-1, -1, -1, 10]), output_shape=[batch_size, ADAPTED_HEIGHT/8, ADAPTED_WIDTH/8, 1], strides=[1,4,4,1]) for k in range(7)], axis=3) + self.weights['ero_mask_deconv32sb']
+        blobs['ero_seg32x'] = tf.concat([tf.nn.conv2d_transpose(tf.slice(blobs['ero_seg32x_coef'], [0, 0, 0, 10*k], [-1, -1, -1, 10]), tf.slice(self.weights['ero_seg_deconv_32xf'], [0, 0, 0, 10*k], [-1, -1, -1, 10]), output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/8), tf.to_int32(ADAPTED_WIDTH/8), 1], strides=[1,4,4,1]) for k in range(7)], axis=3) + self.weights['ero_mask_deconv32sb']
 
         blobs['coef_16x'] = tf.nn.conv2d(blobs['x30'], self.weights['bases_coef_16sf'], [1,1,1,1], padding='SAME') + self.weights['bases_coef_16xb']
 
-        blobs['prediction_16x_add'] = tf.concat([tf.nn.conv2d_transpose(tf.slice(blobs['coef_16x'], [0, 0, 0, 10*k], [-1, -1, -1, 10]), tf.slice(self.weights['deconv_16xf'], [0, 0, 0, 10*k], [-1, -1, -1, 10]), output_shape=[batch_size, ADAPTED_HEIGHT/4, ADAPTED_WIDTH/4, 1], strides=[1,4,4,1]) for k in range(7)], axis=3)
+        blobs['prediction_16x_add'] = tf.concat([tf.nn.conv2d_transpose(tf.slice(blobs['coef_16x'], [0, 0, 0, 10*k], [-1, -1, -1, 10]), tf.slice(self.weights['deconv_16xf'], [0, 0, 0, 10*k], [-1, -1, -1, 10]), output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/4), tf.to_int32(ADAPTED_WIDTH/4), 1], strides=[1,4,4,1]) for k in range(7)], axis=3)
 
         
-        blobs['prediction_32x_bil_x2'] = tf.concat([tf.nn.conv2d_transpose(tf.slice(blobs['prediction_32x'], [0, 0, 0, k], [-1, -1, -1, 1]), tf.slice(self.weights['dec_prediction_32x_bil_x2f'], [0, 0, 0, k], [-1, -1, -1, 1]), output_shape=[batch_size, ADAPTED_HEIGHT/4, ADAPTED_WIDTH/4, 1], strides=[1,2,2,1]) for k in range(7)], axis=3)
+        blobs['prediction_32x_bil_x2'] = tf.concat([tf.nn.conv2d_transpose(tf.slice(blobs['prediction_32x'], [0, 0, 0, k], [-1, -1, -1, 1]), tf.slice(self.weights['dec_prediction_32x_bil_x2f'], [0, 0, 0, k], [-1, -1, -1, 1]), output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/4), tf.to_int32(ADAPTED_WIDTH/4), 1], strides=[1,2,2,1]) for k in range(7)], axis=3)
 
 
         blobs['prob_32x'] = tf.nn.softmax(blobs['prediction_32x_bil_x2'])
@@ -130,11 +130,11 @@ class LRR:
 
         blobs['coef_8x'] = tf.nn.conv2d(blobs['x23'], self.weights['bases_coef_8xf'], [1,1,1,1], padding='SAME') + self.weights['bases_coef_8xb']
 
-        blobs['prediction_8x_add'] = tf.concat([tf.nn.conv2d_transpose(tf.slice(blobs['coef_8x'], [0, 0, 0, 10*k], [-1, -1, -1, 10]), tf.slice(self.weights['deconv_8xf'], [0, 0, 0, 10*k], [-1, -1, -1, 10]), output_shape=[batch_size, ADAPTED_HEIGHT/2, ADAPTED_WIDTH/2, 1], strides=[1,4,4,1]) for k in range(7)], axis=3)
+        blobs['prediction_8x_add'] = tf.concat([tf.nn.conv2d_transpose(tf.slice(blobs['coef_8x'], [0, 0, 0, 10*k], [-1, -1, -1, 10]), tf.slice(self.weights['deconv_8xf'], [0, 0, 0, 10*k], [-1, -1, -1, 10]), output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/2), tf.to_int32(ADAPTED_WIDTH/2), 1], strides=[1,4,4,1]) for k in range(7)], axis=3)
 
         blobs['prediction_16x'] = blobs['prediction_32x_bil_x2'] + blobs['pred_16x_aft_DP']
 
-        blobs['prediction_16x_bil_x2'] = tf.concat([tf.nn.conv2d_transpose(tf.slice(blobs['prediction_16x'], [0, 0, 0, k], [-1, -1, -1, 1]), tf.slice(self.weights['dec_prediction_16x_bil_x2f'], [0, 0, 0, k], [-1, -1, -1, 1]), output_shape=[batch_size, ADAPTED_HEIGHT/2, ADAPTED_WIDTH/2, 1], strides=[1,2,2,1]) for k in range(7)], axis=3)
+        blobs['prediction_16x_bil_x2'] = tf.concat([tf.nn.conv2d_transpose(tf.slice(blobs['prediction_16x'], [0, 0, 0, k], [-1, -1, -1, 1]), tf.slice(self.weights['dec_prediction_16x_bil_x2f'], [0, 0, 0, k], [-1, -1, -1, 1]), output_shape=[batch_size, tf.to_int32(ADAPTED_HEIGHT/2), tf.to_int32(ADAPTED_WIDTH/2), 1], strides=[1,2,2,1]) for k in range(7)], axis=3)
 
 
         blobs['prob_16x'] = tf.nn.softmax(blobs['prediction_16x_bil_x2'])
