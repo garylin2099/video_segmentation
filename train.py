@@ -10,7 +10,7 @@ from models.flownet1 import Flownet1
 from tensorflow.python.framework import ops
 
 from constants import *
-import matplotlib as plt
+import matplotlib.pyplot as plt
 
 bilinear_warping_module = tf.load_op_library('./misc/bilinear_warping.so')
 @ops.RegisterGradient("BilinearWarping")
