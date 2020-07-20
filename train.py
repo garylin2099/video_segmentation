@@ -72,7 +72,7 @@ def train(args):
     static_learning_rate = 0.1
     
     # The total number of iterations and when the static network should start being refined
-    nbr_iterations = 2000
+    nbr_iterations = 1000
     # t0_dilation_net = 5000
     t0_dilation_net = 0
 
@@ -188,6 +188,7 @@ def train(args):
             # GRFP
             rnn_input = {
                 gru_learning_rate: learning_rate,
+                # gru_learning_rate: learning_rate / (training_it + 1),
                 gru_input_images_tensor: np.stack(images),
                 gru_input_flow_tensor: np.stack(optflow),
                 gru_input_segmentation_tensor: np.stack(static_segm),
@@ -219,7 +220,7 @@ def train(args):
             if training_it > 0 and (training_it+1) % 1000 == 0:
                 saver.save(sess, './checkpoints/%s_%s_it%d' % (args.static, args.flow, training_it+1))
 
-            if (training_it+1) % 100 == 0:
+            if (training_it+1) % 10 == 0:
                 print("Iteration %d/%d: Loss %.3f" % (training_it+1, nbr_iterations, loss_history_smoothed[training_it]))
 
         loss_hist_file = np.asarray(loss_history)
@@ -229,16 +230,17 @@ def train(args):
 
 
 def plot_loss_curve(results, title):
-  plt.figure(figsize=(8, 8))
-  plt.title(title)
-  plt.plot(results, label="train_loss")
-#   plt.plot(exp_val_loss, label="val_loss")
-  plt.plot(np.min(results), marker="x", color="r", label="lowest loss")
-  plt.xlabel("iteration")
-  plt.ylabel("loss")
-  plt.legend()
-#   plt.show()
-  plt.savefig('./results/%s.png' % title)
+    plt.figure(figsize=(8, 8))
+    plt.title(title)
+    print(results)
+    plt.plot(range(len(results)), results, label="train_loss")
+    # plt.plot(exp_val_loss, label="val_loss")
+    # plt.plot(np.min(results), marker="x", color="r", label="lowest loss")
+    plt.xlabel("iteration")
+    plt.ylabel("loss")
+    plt.legend()
+    # plt.show()
+    plt.savefig('./results/%s.png' % title)
 
 
 
