@@ -66,13 +66,15 @@ def train(args):
     nbr_classes = 7
 
     # learning rates for the GRU and the static segmentation networks, respectively
-    learning_rate = 2e-5
-    static_learning_rate = 2e-12
+    # learning_rate = 2e-5 # original paper
+    learning_rate = 2e-10
+    # static_learning_rate = 2e-12 # original paper
+    static_learning_rate = 2e-16
     
     # The total number of iterations and when the static network should start being refined
     nbr_iterations = 1000
     # t0_dilation_net = 5000
-    t0_dilation_net = 10
+    t0_dilation_net = 0
 
     im_size = [512, 512]
     # image_mean = [72.39,82.91,73.16] # the mean is automatically subtracted in some modules e.g. flownet2, so be careful
