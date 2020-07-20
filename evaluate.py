@@ -156,7 +156,7 @@ def evaluate(args):
             # output_path = '%s_%s_%s.png' % (city, seq, frame)
             output_path = '%s_02_%s_pred.png' % (seq, frame)
             # cv2.imwrite(os.path.join(cfg.cityscapes_dir, 'results', output_path), S_new)
-            cv2.imwrite(os.path.join('./pred_mask', output_path), S_new)
+            cv2.imwrite(os.path.join('./pred_mask', output_path), S_new * 40)
 
 
         # # Evaluate using the official CityScapes code
