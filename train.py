@@ -10,6 +10,7 @@ from models.flownet1 import Flownet1
 from tensorflow.python.framework import ops
 
 from constants import *
+import matplotlib as plt
 
 bilinear_warping_module = tf.load_op_library('./misc/bilinear_warping.so')
 @ops.RegisterGradient("BilinearWarping")
@@ -221,6 +222,24 @@ def train(args):
 
         loss_hist_file = np.asarray(loss_history)
         np.savetxt("./loss_hist/loss_hist_%s_%s_it%d.csv" % (args.static, args.flow, nbr_iterations), loss_hist_file, delimiter=",")
+
+        plot_loss_curve(loss_history, "%s_%s_loss_curve.csv" % (args.static, args.flow))
+
+
+def plot_loss_curve(results, title):
+  plt.figure(figsize=(8, 8))
+  plt.title(title)
+  plt.plot(results, label="train_loss")
+#   plt.plot(exp_val_loss, label="val_loss")
+  plt.plot(np.min(results), marker="x", color="r", label="lowest loss")
+  plt.xlabel("iteration")
+  plt.ylabel("loss")
+  plt.legend()
+#   plt.show()
+  plt.savefig('./results/%s.png' % title)
+
+
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Tran GRFP on the CityScapes training set.')
