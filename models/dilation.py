@@ -5,7 +5,7 @@ class dilation10network:
         #
         self.dropout_keeprate = dropout_keeprate
         # self.mean = [72.39,82.91,73.16]
-        self.mean = [0,0,0]
+        self.mean = [80.0,100.0,80.0]
 
         self.weights = {
             'conv1_1': tf.Variable(tf.zeros([3, 3, 3, 64], dtype=tf.float32), name='conv1_1'),

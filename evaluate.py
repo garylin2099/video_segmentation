@@ -26,7 +26,7 @@ def evaluate(args):
     # im_size = [1024, 2048]
     im_size = [512, 512]
     # image_mean = [72.39,82.91,73.16] # the mean is automatically subtracted in some modules e.g. flownet2, so be careful
-    image_mean = [0, 0, 0]
+    image_mean = [80.0, 100.0, 80.0]
 
     # f = open('misc/cityscapes_labels.pckl')
     # cs_id2trainid, cs_id2name = pickle.load(f)
@@ -128,6 +128,8 @@ def evaluate(args):
                     # the hidden state is simple the static segmentation for the first frame
                     h = x
                     pred = np.argmax(h, axis=3)
+                    print("first image")
+                    print(np.unique(pred))
                 else:
                     inputs = {
                         input_images_tensor: np.stack([last_im, im]),
@@ -137,6 +139,9 @@ def evaluate(args):
                     }
                     # GRFP
                     h, pred = sess.run([new_h, prediction], feed_dict=inputs)
+                    print("intermediate")
+                    # print(pred)
+                    print(np.unique(pred))
 
                 last_im = im
 
@@ -145,6 +150,8 @@ def evaluate(args):
             S_new = S.copy()
             # for (idx, train_idx) in cs_id2trainid.iteritems():
             #     S_new[S == train_idx] = idx
+            # print(S_new * 40)
+            print(np.unique(S_new))
 
             # output_path = '%s_%s_%s.png' % (city, seq, frame)
             output_path = '%s_02_%s_pred.png' % (seq, frame)

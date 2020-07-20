@@ -71,7 +71,7 @@ def train(args):
 
     im_size = [512, 512]
     # image_mean = [72.39,82.91,73.16] # the mean is automatically subtracted in some modules e.g. flownet2, so be careful
-    image_mean = [0,0,0] # need to replace with our data
+    image_mean = [80.0,100.0,80.0] # need to replace with our data
 
     # f = open('misc/cityscapes_labels.pckl')
     # cs_id2trainid, cs_id2name = pickle.load(f)
