@@ -35,6 +35,10 @@ class DataLoader():
         # i0, j0 = offset
         # i1, j1 = i0 + h, j0 + w
 
+        # shuffle at each new epoch
+        if self.idx % len(self.L) == 0:
+            random.shuffle(self.L)
+
         im_path = self.L[self.idx % len(self.L)] # the gt path, later split into image path
         self.idx += 1
 
