@@ -73,11 +73,11 @@ def train(args):
     nbr_classes = 7
 
     # learning rates for the GRU and the static segmentation networks, respectively
-    # learning_rate = 2e-5 # original paper
-    learning_rate = 1
-    # static_learning_rate = 2e-12 # original paper
+    learning_rate = 2e-5 # original paper
+    # learning_rate = 1
+    static_learning_rate = 2e-12 # original paper
     # static_learning_rate = 0.1
-    static_learning_rate_lrr = 1
+    # static_learning_rate_lrr = 1
     
     # The total number of iterations and when the static network should start being refined
     nbr_iterations = 6000
@@ -120,7 +120,7 @@ def train(args):
         static_network = LRR()
         static_output = static_network(static_input)
 
-        static_learning_rate = tf.placeholder(tf.float32) # variable learning rate
+        # static_learning_rate = tf.placeholder(tf.float32) # variable learning rate
 
         unary_opt, unary_dLdy = static_network.get_optimizer(static_input, static_output, static_learning_rate)
     elif args.static == 'dilation':
@@ -201,8 +201,8 @@ def train(args):
 
             # GRFP
             rnn_input = {
-                # gru_learning_rate: learning_rate,
-                gru_learning_rate: learning_rate * (1-(training_it+1)/nbr_iterations)**2,
+                gru_learning_rate: learning_rate,
+                # gru_learning_rate: learning_rate * (1-(training_it+1)/nbr_iterations)**2,
                 gru_input_images_tensor: np.stack(images),
                 gru_input_flow_tensor: np.stack(optflow),
                 gru_input_segmentation_tensor: np.stack(static_segm),
@@ -229,7 +229,7 @@ def train(args):
                     _ = sess.run([unary_opt], feed_dict={
                       static_input: im,
                       unary_dLdy: g
-                      ,static_learning_rate: static_learning_rate_lrr * (1-(training_it+1)/nbr_iterations)**2
+                    #   ,static_learning_rate: static_learning_rate_lrr * (1-(training_it+1)/nbr_iterations)**2
                     })
 
             if training_it > 0 and (training_it+1) % 1000 == 0:
