@@ -81,7 +81,8 @@ def evaluate(args):
             saver_fn.restore(sess, './checkpoints/flownet2')
 
         # L = glob.glob(os.path.join(cfg.cityscapes_dir, 'gtFine', data_split, "*", "*labelIds.png"))
-        L = glob.glob(os.path.join(VD_VALIDATION_PATH, "*.png"))
+        # L = glob.glob(os.path.join(VD_VALIDATION_PATH, "*.png"))
+        L = glob.glob(os.path.join(VD_TRAIN_PATH, "*.png"))
         for (progress_counter, im_path) in enumerate(L):
             parts = im_path.split('/')[-1].split('_')
             # city, seq, frame = parts[0], parts[1], parts[2]
@@ -95,7 +96,8 @@ def evaluate(args):
                 # frame_path = os.path.join(cfg.cityscapes_video_dir, 'leftImg8bit_sequence', data_split, 
                 #         city, ("%s_%s_%06d_leftImg8bit.png" % (city, seq, t)))
                 # im = cv2.imread(frame_path, 1).astype(np.float32)[np.newaxis,...]
-                frame_path = os.path.join(VD_VALIDATION_PATH, ("%s_02_%02d_2020_cal.jpg" % (seq, t)))
+                # frame_path = os.path.join(VD_VALIDATION_PATH, ("%s_02_%02d_2020_cal.jpg" % (seq, t)))
+                frame_path = os.path.join(VD_TRAIN_PATH, ("%s_02_%02d_2020_cal.jpg" % (seq, t)))
                 im = cv2.imread(frame_path, 1).astype(np.float32)[np.newaxis,...] # seems to be channel dimension first
 
                 # Compute optical flow
@@ -157,7 +159,7 @@ def evaluate(args):
             # output_path = '%s_%s_%s.png' % (city, seq, frame)
             output_path = '%s_02_%s_pred.png' % (seq, frame)
             # cv2.imwrite(os.path.join(cfg.cityscapes_dir, 'results', output_path), S_new)
-            cv2.imwrite(os.path.join('./pred_mask', output_path), S_new * 40)
+            cv2.imwrite(os.path.join('./pred_mask_train', output_path), S_new * 40)
 
 
         # # Evaluate using the official CityScapes code
