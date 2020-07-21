@@ -70,9 +70,12 @@ class STGRU:
 
         targets = tf.placeholder('int64', [self.height, self.width])
         targets_r = tf.reshape(targets, [self.height*self.width])
-        idx = targets_r < self.channels # classes are 0,1,...,c-1 with 255 being unknown
+        # idx = targets_r < self.channels # classes are 0,1,...,c-1 with 255 being unknown
+        # loss = tf.reduce_sum(tf.nn.sparse_softmax_cross_entropy_with_logits(
+        #     logits=tf.boolean_mask(scores, idx), labels=tf.boolean_mask(targets_r, idx)))
         loss = tf.reduce_sum(tf.nn.sparse_softmax_cross_entropy_with_logits(
-            logits=tf.boolean_mask(scores, idx), labels=tf.boolean_mask(targets_r, idx)))
+            logits=scores, labels=tf.targets_r))
+
 
         learning_rate = tf.placeholder('float', [])
         opt = tf.train.AdamOptimizer(learning_rate=learning_rate, beta1=0.95, beta2=0.99, epsilon=1e-8)

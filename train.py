@@ -50,6 +50,8 @@ class DataLoader():
         images = []
         # gt = cv2.imread(im_path, 0)[i0:i1, j0:j1]
         gt = cv2.imread(im_path, 0)
+        gt_intensity_to_class(gt)
+        print(np.unique(gt))
         
         for dt in range(-self.nbr_frames + 1, 1):
             t = int(frame) + dt
@@ -60,6 +62,11 @@ class DataLoader():
             # images.append(cv2.imread(frame_path, 1).astype(np.float32)[i0:i1,j0:j1][np.newaxis,...])
             images.append(cv2.imread(frame_path, 1).astype(np.float32)[np.newaxis,...]) # seems to be channel dimension first
         return images, gt
+
+        def gt_intensity_to_class(gt):
+            for i in range(len(TYPE_INTENSITY)):
+                gt[gt == TYPE_INTENSITY[i]] = i
+            gt[gt == 187] = 6 # fix some individual masks for having intensity 178 as 187
 
 def train(args):
     # nbr_classes = 19
@@ -194,7 +201,7 @@ def train(args):
 
             # GRFP
             rnn_input = {
-                gru_learning_rate: learning_rate,
+                # gru_learning_rate: learning_rate,
                 gru_learning_rate: learning_rate * (1-(training_it+1)/nbr_iterations)**2,
                 gru_input_images_tensor: np.stack(images),
                 gru_input_flow_tensor: np.stack(optflow),

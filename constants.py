@@ -33,6 +33,7 @@ BASELINE_FILE = '{}/baseline_model.h5'.format(MODEL_PATH)
 LAST_SAVED_MODEL = '{}/unet_resnet18_weighted_jaccard.h5'.format(MODEL_PATH)
 CHECKPOINT_FILE = ('{}/{}_{}_{}_'+STAGE+'.h5').format(MODEL_PATH, ARCHITECTURE, BACKBONE, LOSS_FN)
 
+TYPE_INTENSITY = [0, 28, 76, 105, 150, 159, 178] # in some masks 187 becomes 187
 
 TYPES_TO_COLORS = {
     'other': (0,0,0), # all < 5
