@@ -60,13 +60,17 @@ class DataLoader():
             #         city, ("%s_%s_%06d_leftImg8bit.png" % (city, seq, t)))
             frame_path = os.path.join(VD_TRAIN_PATH, ("%s_02_%02d_2020_cal.jpg" % (seq, t)))
             # images.append(cv2.imread(frame_path, 1).astype(np.float32)[i0:i1,j0:j1][np.newaxis,...])
-            images.append(cv2.imread(frame_path, 1).astype(np.float32)[np.newaxis,...]) # seems to be channel dimension first
+            im = cv2.imread(frame_path, 1)
+            im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
+            images.append(im.astype(np.float32)[np.newaxis,...]) # seems to be channel dimension first
         return images, gt
     
     def gt_intensity_to_class(self, gt):
+        print(np.unique(gt))
         for i in range(len(TYPE_INTENSITY)):
             gt[gt == TYPE_INTENSITY[i]] = i
-        gt[gt == 187] = 6 # fix some individual masks for having intensity 178 as 187
+        gt[gt == 187] = 4 # fix some individual masks for having intensity 178 as 187
+        print(np.unique(gt))
 
 def train(args):
     # nbr_classes = 19
@@ -81,7 +85,7 @@ def train(args):
     static_learning_rate_lrr = 1 # second stage
     
     # The total number of iterations and when the static network should start being refined
-    nbr_iterations = 6000
+    nbr_iterations = 2000
     # t0_dilation_net = 5000
     t0_dilation_net = 0
 
@@ -93,7 +97,7 @@ def train(args):
     # cs_id2trainid, cs_id2name = pickle.load(f)
     # f.close()
 
-    assert args.static in ['dilation', 'lrr'], "Only dilation and LRR are supported for now."
+    assert args.static in ['dilation', 'lrr', 'unet'], "Only dilation and LRR are supported for now."
 
     if args.flow == 'flownet2':
         with tf.variable_scope('flow'):
@@ -124,12 +128,10 @@ def train(args):
         static_learning_rate = tf.placeholder(tf.float32) # variable learning rate
 
         unary_opt, unary_dLdy = static_network.get_optimizer(static_input, static_output, static_learning_rate)
-    elif args.static == 'dilation':
-        static_input = tf.placeholder(tf.float32)
-        static_network = dilation10network()
-        static_output = static_network.get_output_tensor(static_input, im_size)
-
-        # unary_opt, unary_dLdy = static_network.get_optimizer(static_input, static_output, static_learning_rate)
+    elif args.static == 'unet':
+        static_network = sm.Unet(backbone_name=BACKBONE, encoder_weights='imagenet', activation=ACTIVATION_FN, classes=N_CLASSES)
+        # static_network.load_weights(TEST_MODEL)
+        static_output = static_network.predict(static_input)
 
     random.seed(5)
     np.random.seed(5)
@@ -193,13 +195,9 @@ def train(args):
             static_segm = []
             for frame in range(args.frames):
                 im = images[frame]
-                if args.static == 'dilation':
-                    # augment a 186x186 border around the image and subtract the mean
-                    im_aug = cv2.copyMakeBorder(im[0], 186, 186, 186, 186, cv2.BORDER_REFLECT_101)
-                    im_aug = im_aug - image_mean
-                    im_aug = im_aug[np.newaxis,...]
-
-                    x = sess.run(static_output, feed_dict={static_input: im_aug})
+                if args.static == 'unet':
+                    x = sess.run(static_output, feed_dict={static_input: im})
+                    print(x)
                 elif args.static == 'lrr':
                     x = sess.run(static_output, feed_dict={static_input: im})
                 static_segm.append(x)
@@ -227,18 +225,18 @@ def train(args):
             # The reason that a two-stage training routine is used
             # is because there is not enough GPU memory (with a 12 GB Titan X)
             # to do it in one pass.
-            if training_it+1 > t0_dilation_net:
-                for k in range(len(images)-3, len(images)):
-                    g = unary_grads[0][k]
-                    im = images[k]
-                    _ = sess.run([unary_opt], feed_dict={
-                      static_input: im,
-                      unary_dLdy: g
-                      ,static_learning_rate: static_learning_rate_lrr * (1-(training_it+1)/nbr_iterations)**2
-                    })
+            # if training_it+1 > t0_dilation_net:
+            #     for k in range(len(images)-3, len(images)):
+            #         g = unary_grads[0][k]
+            #         im = images[k]
+            #         _ = sess.run([unary_opt], feed_dict={
+            #           static_input: im,
+            #           unary_dLdy: g
+            #           ,static_learning_rate: static_learning_rate_lrr * (1-(training_it+1)/nbr_iterations)**2
+            #         })
 
             if training_it > 0 and (training_it+1) % 1000 == 0:
-                saver.save(sess, './checkpoints/%s_%s_it4_%d' % (args.static, args.flow, training_it+1))
+                saver.save(sess, './checkpoints/%s_%s_it%d_unet' % (args.static, args.flow, training_it+1))
 
             if training_it >= 120 and training_it % 120 == 0:
                 print(np.mean(loss_history[(training_it-120): training_it]))
@@ -249,7 +247,7 @@ def train(args):
         # loss_hist_file = np.asarray(loss_history)
         # np.savetxt("./loss_hist/loss_hist_%s_%s_it%d.csv" % (args.static, args.flow, nbr_iterations + use_ckpt * 6000), loss_hist_file, delimiter=",")
 
-        plot_loss_curve(loss_history, "%s_%s_loss_curve" % (args.static, args.flow))
+        plot_loss_curve(loss_history_smoothed, "%s_%s_loss_curve" % (args.static, args.flow))
 
 
 def plot_loss_curve(results, title):
@@ -279,7 +277,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     assert args.flow in ['flownet1', 'flownet2', 'farneback'], "Unknown flow method %s." % args.flow
-    assert args.static in ['dilation', 'dilation_grfp', 'lrr', 'lrr_grfp'], "Unknown static method %s." % args.static
+    assert args.static in ['dilation', 'dilation_grfp', 'lrr', 'lrr_grfp', 'unet'], "Unknown static method %s." % args.static
     assert args.frames >= 1 and args.frames <= 20, "The number of frames must be between 1 and 20."
     
     train(args)
