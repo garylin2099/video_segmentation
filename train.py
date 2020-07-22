@@ -37,8 +37,8 @@ class DataLoader():
         # i1, j1 = i0 + h, j0 + w
 
         # shuffle at each new epoch
-        # if (self.idx + 1) % len(self.L) == 0:
-            # random.shuffle(self.L)
+        if (self.idx + 1) % len(self.L) == 0:
+            random.shuffle(self.L)
 
         im_path = self.L[self.idx % len(self.L)] # the gt path, later split into image path
         self.idx += 1
@@ -75,10 +75,10 @@ def train(args):
     # learning rates for the GRU and the static segmentation networks, respectively
     # learning_rate = 2e-5 # original paper
     # learning_rate = 0.001 # first stage
-    learning_rate = 0.0001 # second stage
+    learning_rate = 1 # second stage
     # static_learning_rate = 2e-12 # original paper
     # static_learning_rate = 0.0001 # first stage
-    static_learning_rate_lrr = 0.00001 # second stage
+    static_learning_rate_lrr = 1 # second stage
     
     # The total number of iterations and when the static network should start being refined
     nbr_iterations = 6000
@@ -238,10 +238,10 @@ def train(args):
                     })
 
             if training_it > 0 and (training_it+1) % 1000 == 0:
-                saver.save(sess, './checkpoints/%s_%s_it%d' % (args.static, args.flow, training_it+1+use_ckpt*6000))
+                saver.save(sess, './checkpoints/%s_%s_it4_%d' % (args.static, args.flow, training_it+1))
 
             if training_it >= 120 and training_it % 120 == 0:
-                print(np.mean(loss[(training_it-120): training_it]))
+                print(np.mean(loss_history[(training_it-120): training_it]))
 
             if (training_it+1) % 10 == 0:
                 print("Iteration %d/%d: Loss %.3f" % (training_it+1, nbr_iterations, loss_history_smoothed[training_it]))
