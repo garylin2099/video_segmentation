@@ -74,8 +74,7 @@ class STGRU:
         # loss = tf.reduce_sum(tf.nn.sparse_softmax_cross_entropy_with_logits(
         #     logits=tf.boolean_mask(scores, idx), labels=tf.boolean_mask(targets_r, idx)))
         loss = tf.reduce_sum(tf.nn.sparse_softmax_cross_entropy_with_logits(
-            logits=scores, labels=tf.targets_r))
-
+            logits=scores, labels=targets_r))
 
         learning_rate = tf.placeholder('float', [])
         opt = tf.train.AdamOptimizer(learning_rate=learning_rate, beta1=0.95, beta2=0.99, epsilon=1e-8)

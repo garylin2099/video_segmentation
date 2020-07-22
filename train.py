@@ -26,7 +26,7 @@ class DataLoader():
         self.L = glob.glob(os.path.join(VD_TRAIN_PATH, "*.png"))
         # random.shuffle(self.L)
         self.idx = 0
-
+    
     def get_next_sequence(self):
         # H, W = self.dataset_size
         h, w = self.im_size
@@ -50,8 +50,8 @@ class DataLoader():
         images = []
         # gt = cv2.imread(im_path, 0)[i0:i1, j0:j1]
         gt = cv2.imread(im_path, 0)
-        gt_intensity_to_class(gt)
-        print(np.unique(gt))
+        self.gt_intensity_to_class(gt)
+        # print(np.unique(gt))
         
         for dt in range(-self.nbr_frames + 1, 1):
             t = int(frame) + dt
@@ -62,22 +62,23 @@ class DataLoader():
             # images.append(cv2.imread(frame_path, 1).astype(np.float32)[i0:i1,j0:j1][np.newaxis,...])
             images.append(cv2.imread(frame_path, 1).astype(np.float32)[np.newaxis,...]) # seems to be channel dimension first
         return images, gt
-
-        def gt_intensity_to_class(gt):
-            for i in range(len(TYPE_INTENSITY)):
-                gt[gt == TYPE_INTENSITY[i]] = i
-            gt[gt == 187] = 6 # fix some individual masks for having intensity 178 as 187
+    
+    def gt_intensity_to_class(self, gt):
+        for i in range(len(TYPE_INTENSITY)):
+            gt[gt == TYPE_INTENSITY[i]] = i
+        gt[gt == 187] = 6 # fix some individual masks for having intensity 178 as 187
 
 def train(args):
     # nbr_classes = 19
     nbr_classes = 7
 
     # learning rates for the GRU and the static segmentation networks, respectively
-    learning_rate = 2e-5 # original paper
-    # learning_rate = 1
-    static_learning_rate = 2e-12 # original paper
-    # static_learning_rate = 0.1
-    # static_learning_rate_lrr = 1
+    # learning_rate = 2e-5 # original paper
+    # learning_rate = 0.001 # first stage
+    learning_rate = 0.0001 # second stage
+    # static_learning_rate = 2e-12 # original paper
+    # static_learning_rate = 0.0001 # first stage
+    static_learning_rate_lrr = 0.00001 # second stage
     
     # The total number of iterations and when the static network should start being refined
     nbr_iterations = 6000
@@ -120,7 +121,7 @@ def train(args):
         static_network = LRR()
         static_output = static_network(static_input)
 
-        # static_learning_rate = tf.placeholder(tf.float32) # variable learning rate
+        static_learning_rate = tf.placeholder(tf.float32) # variable learning rate
 
         unary_opt, unary_dLdy = static_network.get_optimizer(static_input, static_output, static_learning_rate)
     elif args.static == 'dilation':
@@ -157,6 +158,10 @@ def train(args):
         # elif args.static == 'dilation':
         #     assert False, "Pretrained dilation model will soon be released."
         #     saver.restore(sess, './checkpoints/dilation_grfp')
+        use_ckpt = 0
+        if args.ckpt != '':
+            saver.restore(sess, './checkpoints/%s' % (args.ckpt))
+            use_ckpt = 1
 
         if args.flow == 'flownet1':
             saver_fn.restore(sess, './checkpoints/flownet1')
@@ -201,8 +206,8 @@ def train(args):
 
             # GRFP
             rnn_input = {
-                gru_learning_rate: learning_rate,
-                # gru_learning_rate: learning_rate * (1-(training_it+1)/nbr_iterations)**2,
+                # gru_learning_rate: learning_rate,
+                gru_learning_rate: learning_rate * (1-(training_it+1)/nbr_iterations)**2,
                 gru_input_images_tensor: np.stack(images),
                 gru_input_flow_tensor: np.stack(optflow),
                 gru_input_segmentation_tensor: np.stack(static_segm),
@@ -229,21 +234,20 @@ def train(args):
                     _ = sess.run([unary_opt], feed_dict={
                       static_input: im,
                       unary_dLdy: g
-                    #   ,static_learning_rate: static_learning_rate_lrr * (1-(training_it+1)/nbr_iterations)**2
+                      ,static_learning_rate: static_learning_rate_lrr * (1-(training_it+1)/nbr_iterations)**2
                     })
 
             if training_it > 0 and (training_it+1) % 1000 == 0:
-                saver.save(sess, './checkpoints/%s_%s_it%d' % (args.static, args.flow, training_it+1))
+                saver.save(sess, './checkpoints/%s_%s_it%d' % (args.static, args.flow, training_it+1+use_ckpt*6000))
 
-            print(loss)
+            if training_it >= 120 and training_it % 120 == 0:
+                print(np.mean(loss[(training_it-120): training_it]))
 
             if (training_it+1) % 10 == 0:
                 print("Iteration %d/%d: Loss %.3f" % (training_it+1, nbr_iterations, loss_history_smoothed[training_it]))
-                # print(loss_history_smoothed[training_it])
-                print(loss_history[training_it])
 
-        loss_hist_file = np.asarray(loss_history)
-        np.savetxt("./loss_hist/loss_hist_%s_%s_it%d.csv" % (args.static, args.flow, nbr_iterations), loss_hist_file, delimiter=",")
+        # loss_hist_file = np.asarray(loss_history)
+        # np.savetxt("./loss_hist/loss_hist_%s_%s_it%d.csv" % (args.static, args.flow, nbr_iterations + use_ckpt * 6000), loss_hist_file, delimiter=",")
 
         plot_loss_curve(loss_history, "%s_%s_loss_curve" % (args.static, args.flow))
 
@@ -270,6 +274,7 @@ if __name__ == '__main__':
     parser.add_argument('--static', help='Which static network to use.', required=True)
     parser.add_argument('--flow', help='Which optical flow method to use.', required=True)
     parser.add_argument('--frames', type=int, help='Number of frames to use.', default=5, required=False)
+    parser.add_argument('--ckpt', help='checkpoint weights to use.', required=False)
 
     args = parser.parse_args()
 
