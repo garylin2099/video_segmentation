@@ -11,6 +11,7 @@ from tensorflow.python.framework import ops
 
 from constants import *
 import matplotlib.pyplot as plt
+import segmentation_models as sm
 
 bilinear_warping_module = tf.load_op_library('./misc/bilinear_warping.so')
 @ops.RegisterGradient("BilinearWarping")
@@ -62,7 +63,9 @@ class DataLoader():
             # images.append(cv2.imread(frame_path, 1).astype(np.float32)[i0:i1,j0:j1][np.newaxis,...])
             im = cv2.imread(frame_path, 1)
             im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
-            images.append(im.astype(np.float32)[np.newaxis,...]) # seems to be channel dimension first
+            a = im.astype(np.float32)[np.newaxis,...]
+            print("image shape is", a.shape)
+            images.append(im.astype(np.float32)[np.newaxis,...]) # shape: (1, 512, 512, 3)
         return images, gt
     
     def gt_intensity_to_class(self, gt):
@@ -129,9 +132,18 @@ def train(args):
 
         unary_opt, unary_dLdy = static_network.get_optimizer(static_input, static_output, static_learning_rate)
     elif args.static == 'unet':
+        static_input = tf.placeholder(np.float32, shape=(im_size[0],im_size[1], 3))
+        # static_input = tf.placeholder(np.float32)
         static_network = sm.Unet(backbone_name=BACKBONE, encoder_weights='imagenet', activation=ACTIVATION_FN, classes=N_CLASSES)
+        # static_network.compile(optimizer="rmsprop", loss=custom_loss, metrics=[IOUScore()])
+        # callbacks_unet = [
+        #     ReduceLROnPlateau(factor=0.1, patience=8, min_lr=0.000001, verbose=1),
+        #     ModelCheckpoint(CHECKPOINT_FILE, verbose=1, save_best_only=True, save_weights_only=True)
+        # ]
         # static_network.load_weights(TEST_MODEL)
-        static_output = static_network.predict(static_input)
+        print("to graph step")
+        static_output = static_network.predict(static_input, steps=1)
+        print("graph step ok")
 
     random.seed(5)
     np.random.seed(5)
@@ -161,7 +173,7 @@ def train(args):
         #     assert False, "Pretrained dilation model will soon be released."
         #     saver.restore(sess, './checkpoints/dilation_grfp')
         use_ckpt = 0
-        if args.ckpt != '':
+        if args.ckpt is not None and args.ckpt != '':
             saver.restore(sess, './checkpoints/%s' % (args.ckpt))
             use_ckpt = 1
 
@@ -196,10 +208,16 @@ def train(args):
             for frame in range(args.frames):
                 im = images[frame]
                 if args.static == 'unet':
-                    x = sess.run(static_output, feed_dict={static_input: im})
+                    print("static seg, input shape", im.shape)
+                    im_3d = im.reshape((-1, im.shape[1:4]))
+                    print("input reshape", im_3d.shape)
+                    # x = static_output.predict(im)
+                    x = sess.run(static_output, feed_dict={static_input: im_3d})
                     print(x)
                 elif args.static == 'lrr':
                     x = sess.run(static_output, feed_dict={static_input: im})
+                    print("output tensor shape", x.shape)
+                    print(x)
                 static_segm.append(x)
 
             # GRFP
