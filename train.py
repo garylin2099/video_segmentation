@@ -73,12 +73,12 @@ def train(args):
     nbr_classes = 7
 
     # learning rates for the GRU and the static segmentation networks, respectively
-    learning_rate = 2e-5 # original paper
+    # learning_rate = 2e-5 # original paper
     # learning_rate = 0.001 # first stage
-    # learning_rate = 0.1 # second stage
+    learning_rate = 0.1 # second stage
     # static_learning_rate = 2e-12 # original paper
     # static_learning_rate = 0.0001 # first stage
-    static_learning_rate_lrr = 2e-12 # second stage
+    static_learning_rate_lrr = 0.1 # second stage
     
     # The total number of iterations and when the static network should start being refined
     nbr_iterations = 24000
