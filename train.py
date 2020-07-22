@@ -73,15 +73,15 @@ def train(args):
     nbr_classes = 7
 
     # learning rates for the GRU and the static segmentation networks, respectively
-    # learning_rate = 2e-5 # original paper
+    learning_rate = 2e-5 # original paper
     # learning_rate = 0.001 # first stage
-    learning_rate = 1 # second stage
+    # learning_rate = 0.1 # second stage
     # static_learning_rate = 2e-12 # original paper
     # static_learning_rate = 0.0001 # first stage
-    static_learning_rate_lrr = 1 # second stage
+    static_learning_rate_lrr = 2e-12 # second stage
     
     # The total number of iterations and when the static network should start being refined
-    nbr_iterations = 6000
+    nbr_iterations = 24000
     # t0_dilation_net = 5000
     t0_dilation_net = 0
 
@@ -228,7 +228,7 @@ def train(args):
             # is because there is not enough GPU memory (with a 12 GB Titan X)
             # to do it in one pass.
             if training_it+1 > t0_dilation_net:
-                for k in range(len(images)-3, len(images)):
+                for k in range(len(images)-2, len(images)):
                     g = unary_grads[0][k]
                     im = images[k]
                     _ = sess.run([unary_opt], feed_dict={
@@ -237,8 +237,8 @@ def train(args):
                       ,static_learning_rate: static_learning_rate_lrr * (1-(training_it+1)/nbr_iterations)**2
                     })
 
-            if training_it > 0 and (training_it+1) % 1000 == 0:
-                saver.save(sess, './checkpoints/%s_%s_it4_%d' % (args.static, args.flow, training_it+1))
+            if training_it > 0 and (training_it+1) % 6000 == 0:
+                saver.save(sess, './checkpoints/%s_%s_it5_%d' % (args.static, args.flow, training_it+1))
 
             if training_it >= 120 and training_it % 120 == 0:
                 print(np.mean(loss_history[(training_it-120): training_it]))
