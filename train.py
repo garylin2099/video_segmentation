@@ -81,14 +81,12 @@ def train(args):
 
     # learning rates for the GRU and the static segmentation networks, respectively
     learning_rate = 2e-5 # original paper
-    # learning_rate = 0.001 # first stage
     # learning_rate = 1 # second stage
     # static_learning_rate = 2e-12 # original paper
-    # static_learning_rate = 0.0001 # first stage
     # static_learning_rate_lrr = 1 # second stage
     
     # The total number of iterations and when the static network should start being refined
-    nbr_iterations = 2000
+    nbr_iterations = 24000
     # t0_dilation_net = 5000
     t0_dilation_net = 0
 
@@ -214,8 +212,8 @@ def train(args):
 
             # GRFP
             rnn_input = {
-                # gru_learning_rate: learning_rate,
-                gru_learning_rate: learning_rate * (1-(training_it+1)/nbr_iterations)**2,
+                gru_learning_rate: learning_rate,
+                # gru_learning_rate: learning_rate * (1-(training_it+1)/nbr_iterations)**2,
                 gru_input_images_tensor: np.stack(images),
                 gru_input_flow_tensor: np.stack(optflow),
                 gru_input_segmentation_tensor: np.stack(static_segm),
@@ -257,7 +255,7 @@ def train(args):
         # loss_hist_file = np.asarray(loss_history)
         # np.savetxt("./loss_hist/loss_hist_%s_%s_it%d.csv" % (args.static, args.flow, nbr_iterations + use_ckpt * 6000), loss_hist_file, delimiter=",")
 
-        plot_loss_curve(loss_history_smoothed, "%s_%s_loss_curve" % (args.static, args.flow))
+        plot_loss_curve(loss_history_smoothed, "%s_%s_loss_curve_f%d_lr%d" % (args.static, args.flow, args.frames, learning_rate))
 
 
 def plot_loss_curve(results, title):

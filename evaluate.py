@@ -54,6 +54,7 @@ def evaluate(args):
             saver.restore(sess, './checkpoints/%s' % (args.ckpt))
         
         if args.original_static == 1:
+            print("use original network")
             static_network.load_weights(TEST_MODEL) # use original unet, this should overwrite weights restored by checkpoint
 
         if args.flow == 'flownet1':
@@ -69,7 +70,7 @@ def evaluate(args):
             # city, seq, frame = parts[0], parts[1], parts[2]
             seq, frame = parts[0], parts[2]
 
-            print("Processing sequence %d/%d" % (progress_counter+1, len(L)))
+            # print("Processing sequence %d/%d" % (progress_counter+1, len(L)))
             for dt in range(-args.frames + 1, 1):
                 first_frame = dt == -args.frames + 1
                 t = int(frame) + dt
@@ -109,9 +110,8 @@ def evaluate(args):
                     }
                     # GRFP
                     h, pred = sess.run([new_h, prediction], feed_dict=inputs)
-                    print("intermediate")
-                    # print(pred)
-                    print(np.unique(pred))
+                    # print("intermediate")
+                    # print(np.unique(pred))
 
                 last_im = im
 
@@ -120,12 +120,17 @@ def evaluate(args):
             S_new = S.copy()
             # for (idx, train_idx) in cs_id2trainid.iteritems():
             #     S_new[S == train_idx] = idx
-            # print(S_new * 40)
-            print("final")
-            print(np.unique(S_new))
+            
+            # print("final")
+            # print(np.unique(S_new))
 
             # output_path = '%s_%s_%s.png' % (city, seq, frame)
-            output_path = '%s_02_%s_pred.png' % (seq, frame)
+            if args.original_static == 1:
+                # print("write, fix")
+                output_path = '%s_02_%s_pred_%df_fix.png' % (seq, frame, args.frames)
+            else:
+                # print("write, end to end")
+                output_path = '%s_02_%s_pred_%df.png' % (seq, frame, args.frames)
             # cv2.imwrite(os.path.join(cfg.cityscapes_dir, 'results', output_path), S_new)
             cv2.imwrite(os.path.join('./pred_mask_train', output_path), S_new * 40)
 
@@ -142,6 +147,7 @@ if __name__ == '__main__':
     parser.add_argument('--flow', help='Which optical flow method to use.', required=True)
     parser.add_argument('--frames', type=int, help='Number of frames to use.', default=5, required=False)
     parser.add_argument('--ckpt', help='Which checkpoint file to load from. Specify relative to the ./checkpoints/ directory.', default='', required=False)
+    parser.add_argument('--original_static', type=int, help='whether to use original weights for static nn', default=0, required=False)
 
     args = parser.parse_args()
 
