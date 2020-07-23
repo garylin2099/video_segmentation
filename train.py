@@ -6,7 +6,7 @@ from models.stgru import STGRU
 from models.lrr import LRR
 from models.dilation import dilation10network
 from models.flownet2 import Flownet2
-from models.flownet1 import Flownet1
+# from models.flownet1 import Flownet1
 from tensorflow.python.framework import ops
 
 from constants import *
@@ -31,11 +31,6 @@ class DataLoader():
     def get_next_sequence(self):
         # H, W = self.dataset_size
         h, w = self.im_size
-
-        # offset = [np.random.randint(H - h),
-        #     np.random.randint(W - w)]
-        # i0, j0 = offset
-        # i1, j1 = i0 + h, j0 + w
 
         # shuffle at each new epoch
         if (self.idx + 1) % len(self.L) == 0:
@@ -101,16 +96,9 @@ def train(args):
             flow_img0 = tf.placeholder(tf.float32)
             flow_img1 = tf.placeholder(tf.float32)
             flow_tensor = flow_network(flow_img0, flow_img1, flip=True)
-    elif args.flow == 'flownet1':
-        with tf.variable_scope('flow'):
-            flow_network = Flownet1()
-            flow_img0 = tf.placeholder(tf.float32)
-            flow_img1 = tf.placeholder(tf.float32)
-            flow_tensor = flow_network.get_output_tensor(flow_img0, flow_img1, im_size)
 
     RNN = STGRU([nbr_classes, im_size[0], im_size[1]], [7, 7], bilinear_warping_module)
-    # RNN = STGRU([nbr_classes, im_size[0], im_size[1]], [6, 6], bilinear_warping_module)
-    
+
     gru_opt, gru_loss, gru_prediction, gru_learning_rate, \
         gru_input_images_tensor, gru_input_flow_tensor, \
         gru_input_segmentation_tensor, gru_targets = RNN.get_optimizer(args.frames)
@@ -121,16 +109,11 @@ def train(args):
         static_network = LRR()
         static_output = static_network(static_input)
 
-        static_learning_rate = tf.placeholder(tf.float32) # variable learning rate
+        # static_learning_rate = tf.placeholder(tf.float32) # variable learning rate
 
         unary_opt, unary_dLdy = static_network.get_optimizer(static_input, static_output, static_learning_rate)
     elif args.static == 'unet':
-        # static_input = tf.placeholder(np.float32, shape=(im_size[0],im_size[1], 3))
-        # static_input = tf.placeholder(np.float32)
         static_network = sm.Unet(backbone_name=BACKBONE, encoder_weights=None, activation=ACTIVATION_FN, classes=N_CLASSES)
-        print("to graph step")
-        # static_output = static_network.predict(static_input, steps=1)
-        # print("graph step ok")
 
     random.seed(5)
     np.random.seed(5)
@@ -181,16 +164,6 @@ def train(args):
                 im, last_im = images[frame], images[frame-1]
                 if args.flow == 'flownet2':
                     flow = sess.run(flow_tensor, feed_dict={flow_img0: im, flow_img1: last_im})
-                elif args.flow == 'flownet1':
-                    flow = sess.run(flow_tensor, feed_dict={flow_img0: im, flow_img1: last_im})
-                    flow = flow[...,(1, 0)]
-                elif args.flow == 'farneback':
-                    im_gray = cv2.cvtColor(im[0], cv2.COLOR_BGR2GRAY)
-                    last_im_gray = cv2.cvtColor(last_im[0], cv2.COLOR_BGR2GRAY)
-
-                    flow = cv2.calcOpticalFlowFarneback(im_gray, last_im_gray, None, 0.5, 3, 15, 3, 5, 1.2, 0)
-                    flow = flow[...,(1, 0)]
-                    flow = flow[np.newaxis,...]
                 optflow.append(flow)
 
             # Static segmentation
@@ -199,11 +172,7 @@ def train(args):
                 im = images[frame]
                 if args.static == 'unet':
                     # print("static seg, input shape", im.shape)
-                    # im_3d = im.reshape((im.shape[1:4]))
-                    # print("input reshape", im_3d.shape)
                     x = static_network.predict(im)
-                    # x = x.reshape(1, im_size[0], im_size[1], nbr_classes)
-                    # x = sess.run(static_output, feed_dict={static_input: im_3d})
                     # print(x.shape)
                 elif args.static == 'lrr':
                     x = sess.run(static_output, feed_dict={static_input: im})
@@ -243,7 +212,7 @@ def train(args):
             #           ,static_learning_rate: static_learning_rate_lrr * (1-(training_it+1)/nbr_iterations)**2
             #         })
 
-            if training_it > 0 and (training_it+1) % 1000 == 0:
+            if training_it > 0 and (training_it+1) % 6000 == 0:
                 saver.save(sess, './checkpoints/%s_%s_it%d' % (args.static, args.flow, training_it+1))
 
             if training_it >= 120 and training_it % 120 == 0:
@@ -255,7 +224,7 @@ def train(args):
         # loss_hist_file = np.asarray(loss_history)
         # np.savetxt("./loss_hist/loss_hist_%s_%s_it%d.csv" % (args.static, args.flow, nbr_iterations + use_ckpt * 6000), loss_hist_file, delimiter=",")
 
-        plot_loss_curve(loss_history_smoothed, "%s_%s_loss_curve_f%d_lr%d" % (args.static, args.flow, args.frames, learning_rate))
+        plot_loss_curve(loss_history_smoothed, "%s_%s_loss_curve_f%d_lr-5" % (args.static, args.flow, args.frames))
 
 
 def plot_loss_curve(results, title):

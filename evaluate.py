@@ -6,7 +6,7 @@ from models.stgru import STGRU
 from models.lrr import LRR
 from models.dilation import dilation10network
 from models.flownet2 import Flownet2
-from models.flownet1 import Flownet1
+# from models.flownet1 import Flownet1
 from tensorflow.python.framework import ops
 
 from constants import *
