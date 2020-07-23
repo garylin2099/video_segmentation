@@ -9,9 +9,6 @@ from models.flownet2 import Flownet2
 from models.flownet1 import Flownet1
 from tensorflow.python.framework import ops
 
-# sys.path.insert(0, os.path.join(cfg.cityscapes_scripts_root, 'evaluation'))
-# import evalPixelLevelSemanticLabeling
-
 from constants import *
 import segmentation_models as sm
 
@@ -27,13 +24,6 @@ def evaluate(args):
     # im_size = [1024, 2048]
     im_size = [512, 512]
     # image_mean = [72.39,82.91,73.16] # the mean is automatically subtracted in some modules e.g. flownet2, so be careful
-    image_mean = [80.0, 100.0, 80.0]
-
-    # f = open('misc/cityscapes_labels.pckl')
-    # cs_id2trainid, cs_id2name = pickle.load(f)
-    # f.close()
-
-    assert args.static in ['dilation', 'lrr', 'unet'], "Only dilation and LRR are supported for now."
     
     if args.flow == 'flownet2':
         with tf.variable_scope('flow'):
@@ -41,12 +31,6 @@ def evaluate(args):
             flow_img0 = tf.placeholder(tf.float32)
             flow_img1 = tf.placeholder(tf.float32)
             flow_tensor = flow_network(flow_img0, flow_img1, flip=True)
-    elif args.flow == 'flownet1':
-        with tf.variable_scope('flow'):
-            flow_network = Flownet1()
-            flow_img0 = tf.placeholder(tf.float32)
-            flow_img1 = tf.placeholder(tf.float32)
-            flow_tensor = flow_network.get_output_tensor(flow_img0, flow_img1, im_size)
 
     RNN = STGRU([nbr_classes, im_size[0], im_size[1]], [7, 7], bilinear_warping_module)
     
@@ -67,14 +51,10 @@ def evaluate(args):
 
     with tf.Session() as sess:
         if args.ckpt != '': # load checkpoints models saved in training
-            print("to restore stage")
             saver.restore(sess, './checkpoints/%s' % (args.ckpt))
-            print("store stage complete")
-        else:
-            if args.static == 'lrr':
-                saver.restore(sess, './checkpoints/lrr_grfp')
-            elif args.static == 'dilation':
-                saver.restore(sess, './checkpoints/dilation_grfp')
+        
+        if args.original_static == 1:
+            static_network.load_weights(TEST_MODEL) # use original unet, this should overwrite weights restored by checkpoint
 
         if args.flow == 'flownet1':
             saver_fn.restore(sess, './checkpoints/flownet1')
@@ -99,7 +79,9 @@ def evaluate(args):
                 # im = cv2.imread(frame_path, 1).astype(np.float32)[np.newaxis,...]
                 # frame_path = os.path.join(VD_VALIDATION_PATH, ("%s_02_%02d_2020_cal.jpg" % (seq, t)))
                 frame_path = os.path.join(VD_TRAIN_PATH, ("%s_02_%02d_2020_cal.jpg" % (seq, t)))
-                im = cv2.imread(frame_path, 1).astype(np.float32)[np.newaxis,...] # seems to be channel dimension first
+                # im = cv2.imread(frame_path, 1).astype(np.float32)[np.newaxis,...]
+                im = cv2.imread(frame_path, 1)
+                im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB).astype(np.float32)[np.newaxis,...]
 
                 # Compute optical flow
                 if not first_frame:
@@ -143,7 +125,7 @@ def evaluate(args):
             print(np.unique(S_new))
 
             # output_path = '%s_%s_%s.png' % (city, seq, frame)
-            output_path = '%s_02_%s_pred2f.png' % (seq, frame)
+            output_path = '%s_02_%s_pred.png' % (seq, frame)
             # cv2.imwrite(os.path.join(cfg.cityscapes_dir, 'results', output_path), S_new)
             cv2.imwrite(os.path.join('./pred_mask_train', output_path), S_new * 40)
 

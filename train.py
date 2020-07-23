@@ -63,7 +63,7 @@ class DataLoader():
             # images.append(cv2.imread(frame_path, 1).astype(np.float32)[i0:i1,j0:j1][np.newaxis,...])
             im = cv2.imread(frame_path, 1)
             im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
-            a = im.astype(np.float32)[np.newaxis,...]
+            # a = im.astype(np.float32)[np.newaxis,...]
             # print("image shape is", a.shape)
             images.append(im.astype(np.float32)[np.newaxis,...]) # shape: (1, 512, 512, 3)
         return images, gt
@@ -80,12 +80,12 @@ def train(args):
     nbr_classes = 7
 
     # learning rates for the GRU and the static segmentation networks, respectively
-    # learning_rate = 2e-5 # original paper
+    learning_rate = 2e-5 # original paper
     # learning_rate = 0.001 # first stage
-    learning_rate = 1 # second stage
+    # learning_rate = 1 # second stage
     # static_learning_rate = 2e-12 # original paper
     # static_learning_rate = 0.0001 # first stage
-    static_learning_rate_lrr = 1 # second stage
+    # static_learning_rate_lrr = 1 # second stage
     
     # The total number of iterations and when the static network should start being refined
     nbr_iterations = 2000
@@ -94,11 +94,6 @@ def train(args):
 
     im_size = [512, 512]
     # image_mean = [72.39,82.91,73.16] # the mean is automatically subtracted in some modules e.g. flownet2, so be careful
-    image_mean = [80.0,100.0,80.0] # need to replace with our data
-
-    # f = open('misc/cityscapes_labels.pckl')
-    # cs_id2trainid, cs_id2name = pickle.load(f)
-    # f.close()
 
     assert args.static in ['dilation', 'lrr', 'unet'], "Only dilation and LRR are supported for now."
 
