@@ -132,18 +132,13 @@ def train(args):
 
         unary_opt, unary_dLdy = static_network.get_optimizer(static_input, static_output, static_learning_rate)
     elif args.static == 'unet':
-        static_input = tf.placeholder(np.float32, shape=(im_size[0],im_size[1], 3))
+        # static_input = tf.placeholder(np.float32, shape=(im_size[0],im_size[1], 3))
         # static_input = tf.placeholder(np.float32)
-        static_network = sm.Unet(backbone_name=BACKBONE, encoder_weights='imagenet', activation=ACTIVATION_FN, classes=N_CLASSES)
-        # static_network.compile(optimizer="rmsprop", loss=custom_loss, metrics=[IOUScore()])
-        # callbacks_unet = [
-        #     ReduceLROnPlateau(factor=0.1, patience=8, min_lr=0.000001, verbose=1),
-        #     ModelCheckpoint(CHECKPOINT_FILE, verbose=1, save_best_only=True, save_weights_only=True)
-        # ]
-        # static_network.load_weights(TEST_MODEL)
+        static_network = sm.Unet(backbone_name=BACKBONE, encoder_weights=None, activation=ACTIVATION_FN, classes=N_CLASSES)
+        static_network.load_weights(TEST_MODEL)
         print("to graph step")
-        static_output = static_network.predict(static_input, steps=1)
-        print("graph step ok")
+        # static_output = static_network.predict(static_input, steps=1)
+        # print("graph step ok")
 
     random.seed(5)
     np.random.seed(5)
@@ -211,9 +206,9 @@ def train(args):
                     print("static seg, input shape", im.shape)
                     im_3d = im.reshape((-1, im.shape[1:4]))
                     print("input reshape", im_3d.shape)
-                    # x = static_output.predict(im)
-                    x = sess.run(static_output, feed_dict={static_input: im_3d})
-                    print(x)
+                    x = static_network.predict(im)
+                    # x = sess.run(static_output, feed_dict={static_input: im_3d})
+                    print(x.shape)
                 elif args.static == 'lrr':
                     x = sess.run(static_output, feed_dict={static_input: im})
                     print("output tensor shape", x.shape)

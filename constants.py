@@ -11,7 +11,7 @@ VD_TRAIN_PATH = './video/train/'
 VD_VALIDATION_PATH = './video/val'
 SF_TRAIN_PATH = './single_frame/train/'
 SF_VALIDATION_PATH = './single_frame/val'
-MODEL_PATH = './models'
+MODEL_PATH = './models_saved'
 
 IM_WIDTH = 512
 IM_HEIGHT = 512
