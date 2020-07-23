@@ -11,6 +11,7 @@ from tensorflow.python.framework import ops
 
 from constants import *
 import segmentation_models as sm
+from grfp_utils import *
 
 bilinear_warping_module = tf.load_op_library('./misc/bilinear_warping.so')
 @ops.RegisterGradient("BilinearWarping")
@@ -132,7 +133,8 @@ def evaluate(args):
                 # print("write, end to end")
                 output_path = '%s_02_%s_pred_%df.png' % (seq, frame, args.frames)
             # cv2.imwrite(os.path.join(cfg.cityscapes_dir, 'results', output_path), S_new)
-            cv2.imwrite(os.path.join('./pred_mask_train', output_path), S_new * 40)
+            S_color = labels_to_colors(S)
+            cv2.imwrite(os.path.join('./pred_mask_train', output_path), S_color)
 
 
         # # Evaluate using the official CityScapes code

@@ -68,3 +68,13 @@ def plot_loss_curve(results, title):
     plt.legend()
     # plt.show()
     plt.savefig('./results/%s.png' % title)
+
+def labels_to_colors(label_map):
+    predicted_mask = np.full((label_map.shape[0], label_map.shape[1], 3), 0)
+    for j in range(len(COLORS)):
+        pred_indices = np.argwhere(label_map == j)
+        for pred_index in pred_indices:
+            predicted_mask[pred_index[0], pred_index[1], :] = COLORS[j]
+    predicted_mask = cv2.cvtColor(predicted_mask.astype("uint8"),\
+         cv2.COLOR_RGB2BGR) # convert RGB value to BGR and unsigned int8 for imwrite
+    return predicted_mask
