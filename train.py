@@ -64,16 +64,16 @@ class DataLoader():
             im = cv2.imread(frame_path, 1)
             im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
             a = im.astype(np.float32)[np.newaxis,...]
-            print("image shape is", a.shape)
+            # print("image shape is", a.shape)
             images.append(im.astype(np.float32)[np.newaxis,...]) # shape: (1, 512, 512, 3)
         return images, gt
     
     def gt_intensity_to_class(self, gt):
-        print(np.unique(gt))
+        # print(np.unique(gt))
         for i in range(len(TYPE_INTENSITY)):
             gt[gt == TYPE_INTENSITY[i]] = i
         gt[gt == 187] = 4 # fix some individual masks for having intensity 178 as 187
-        print(np.unique(gt))
+        # print(np.unique(gt))
 
 def train(args):
     # nbr_classes = 19
@@ -135,7 +135,6 @@ def train(args):
         # static_input = tf.placeholder(np.float32, shape=(im_size[0],im_size[1], 3))
         # static_input = tf.placeholder(np.float32)
         static_network = sm.Unet(backbone_name=BACKBONE, encoder_weights=None, activation=ACTIVATION_FN, classes=N_CLASSES)
-        static_network.load_weights(TEST_MODEL)
         print("to graph step")
         # static_output = static_network.predict(static_input, steps=1)
         # print("graph step ok")
@@ -167,6 +166,9 @@ def train(args):
         # elif args.static == 'dilation':
         #     assert False, "Pretrained dilation model will soon be released."
         #     saver.restore(sess, './checkpoints/dilation_grfp')
+        if args.static == 'unet':
+            static_network.load_weights(TEST_MODEL)
+
         use_ckpt = 0
         if args.ckpt is not None and args.ckpt != '':
             saver.restore(sess, './checkpoints/%s' % (args.ckpt))
@@ -203,16 +205,16 @@ def train(args):
             for frame in range(args.frames):
                 im = images[frame]
                 if args.static == 'unet':
-                    print("static seg, input shape", im.shape)
-                    im_3d = im.reshape((-1, im.shape[1:4]))
-                    print("input reshape", im_3d.shape)
+                    # print("static seg, input shape", im.shape)
+                    # im_3d = im.reshape((im.shape[1:4]))
+                    # print("input reshape", im_3d.shape)
                     x = static_network.predict(im)
+                    # x = x.reshape(1, im_size[0], im_size[1], nbr_classes)
                     # x = sess.run(static_output, feed_dict={static_input: im_3d})
-                    print(x.shape)
+                    # print(x.shape)
                 elif args.static == 'lrr':
                     x = sess.run(static_output, feed_dict={static_input: im})
-                    print("output tensor shape", x.shape)
-                    print(x)
+                    # print("output tensor shape", x.shape)
                 static_segm.append(x)
 
             # GRFP
@@ -249,7 +251,7 @@ def train(args):
             #         })
 
             if training_it > 0 and (training_it+1) % 1000 == 0:
-                saver.save(sess, './checkpoints/%s_%s_it%d_unet' % (args.static, args.flow, training_it+1))
+                saver.save(sess, './checkpoints/%s_%s_it%d' % (args.static, args.flow, training_it+1))
 
             if training_it >= 120 and training_it % 120 == 0:
                 print(np.mean(loss_history[(training_it-120): training_it]))

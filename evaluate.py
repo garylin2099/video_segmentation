@@ -13,6 +13,7 @@ from tensorflow.python.framework import ops
 # import evalPixelLevelSemanticLabeling
 
 from constants import *
+import segmentation_models as sm
 
 bilinear_warping_module = tf.load_op_library('./misc/bilinear_warping.so')
 @ops.RegisterGradient("BilinearWarping")
@@ -32,7 +33,7 @@ def evaluate(args):
     # cs_id2trainid, cs_id2name = pickle.load(f)
     # f.close()
 
-    assert args.static in ['dilation', 'lrr'], "Only dilation and LRR are supported for now."
+    assert args.static in ['dilation', 'lrr', 'unet'], "Only dilation and LRR are supported for now."
     
     if args.flow == 'flownet2':
         with tf.variable_scope('flow'):
@@ -57,10 +58,8 @@ def evaluate(args):
         static_input = tf.placeholder(tf.float32)
         static_network = LRR()
         static_output = static_network(static_input)
-    elif args.static == 'dilation':
-        static_input = tf.placeholder(tf.float32)
-        static_network = dilation10network()
-        static_output = static_network.get_output_tensor(static_input, im_size)
+    elif args.static == 'unet':
+        static_network = sm.Unet(backbone_name=BACKBONE, encoder_weights=None, activation=ACTIVATION_FN, classes=N_CLASSES)
 
     saver = tf.train.Saver([k for k in tf.global_variables() if not k.name.startswith('flow/')])
     if args.flow in ['flownet1', 'flownet2']:
@@ -68,7 +67,9 @@ def evaluate(args):
 
     with tf.Session() as sess:
         if args.ckpt != '': # load checkpoints models saved in training
+            print("to restore stage")
             saver.restore(sess, './checkpoints/%s' % (args.ckpt))
+            print("store stage complete")
         else:
             if args.static == 'lrr':
                 saver.restore(sess, './checkpoints/lrr_grfp')
@@ -104,34 +105,19 @@ def evaluate(args):
                 if not first_frame:
                     if args.flow == 'flownet2':
                         flow = sess.run(flow_tensor, feed_dict={flow_img0: im, flow_img1: last_im})
-                    elif args.flow == 'flownet1':
-                        flow = sess.run(flow_tensor, feed_dict={flow_img0: im, flow_img1: last_im})
-                        flow = flow[...,(1, 0)]
-                    elif args.flow == 'farneback':
-                        im_gray = cv2.cvtColor(im[0], cv2.COLOR_BGR2GRAY)
-                        last_im_gray = cv2.cvtColor(last_im[0], cv2.COLOR_BGR2GRAY)
-
-                        flow = cv2.calcOpticalFlowFarneback(im_gray, last_im_gray, None, 0.5, 3, 15, 3, 5, 1.2, 0)
-                        flow = flow[...,(1, 0)]
-                        flow = flow[np.newaxis,...]
 
                 # Static segmentation
-                if args.static == 'dilation':
-                    # augment a 186x186 border around the image and subtract the mean
-                    im_aug = cv2.copyMakeBorder(im[0], 186, 186, 186, 186, cv2.BORDER_REFLECT_101)
-                    im_aug = im_aug - image_mean
-                    im_aug = im_aug[np.newaxis,...]
-
-                    x = sess.run(static_output, feed_dict={static_input: im_aug})
-                elif args.static == 'lrr':
+                if args.static == 'lrr':
                     x = sess.run(static_output, feed_dict={static_input: im})
+                elif args.static == 'unet':
+                    x = static_network.predict(im)
                 
                 if first_frame:
                     # the hidden state is simple the static segmentation for the first frame
                     h = x
                     pred = np.argmax(h, axis=3)
-                    print("first image")
-                    print(np.unique(pred))
+                    # print("first image")
+                    # print(np.unique(pred))
                 else:
                     inputs = {
                         input_images_tensor: np.stack([last_im, im]),
@@ -157,7 +143,7 @@ def evaluate(args):
             print(np.unique(S_new))
 
             # output_path = '%s_%s_%s.png' % (city, seq, frame)
-            output_path = '%s_02_%s_pred.png' % (seq, frame)
+            output_path = '%s_02_%s_pred2f.png' % (seq, frame)
             # cv2.imwrite(os.path.join(cfg.cityscapes_dir, 'results', output_path), S_new)
             cv2.imwrite(os.path.join('./pred_mask_train', output_path), S_new * 40)
 
@@ -178,7 +164,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     assert args.flow in ['flownet1', 'flownet2', 'farneback'], "Unknown flow method %s." % args.flow
-    assert args.static in ['dilation', 'dilation_grfp', 'lrr', 'lrr_grfp'], "Unknown static method %s." % args.static
+    assert args.static in ['dilation', 'dilation_grfp', 'lrr', 'lrr_grfp', 'unet'], "Unknown static method %s." % args.static
     assert args.frames >= 1 and args.frames <= 20, "The number of frames must be between 1 and 20."
     
     evaluate(args)
