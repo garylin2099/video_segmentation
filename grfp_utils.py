@@ -78,3 +78,66 @@ def labels_to_colors(label_map):
     predicted_mask = cv2.cvtColor(predicted_mask.astype("uint8"),\
          cv2.COLOR_RGB2BGR) # convert RGB value to BGR and unsigned int8 for imwrite
     return predicted_mask
+
+def iou_score(target, prediction, label):
+    target_tf = (np.array(target) == label)
+    pred_tf = (np.array(prediction) == label)
+    intersection = np.logical_and(target_tf, pred_tf)
+    union = np.logical_or(target_tf, pred_tf)
+    if np.count_nonzero(union)>0:
+      iou_score = np.count_nonzero(intersection) / np.count_nonzero(union)
+    else:
+      iou_score = 1.
+    return iou_score
+
+def colors_to_labels(gt_path):
+    gt = cv2.imread(gt_path, 0) # grayscale image with 7 different intensities
+    # intensity to plant type
+    for i in range(len(TYPE_INTENSITY)):
+        gt[gt == TYPE_INTENSITY[i]] = i
+    gt[gt == 187] = 4 # fix some individual masks for having intensity 178 as 187
+    return gt
+
+def categorical_iou_eval_each_im(gt_path, pred_label_map, iou):
+    id_ = gt_path[:-4]
+    print('measuring IoU {}'.format(id_))
+
+    truth_label_map = colors_to_labels(gt_path)
+
+    plants_each_im = np.zeros(N_CLASSES)
+    for j in range(len(COLORS)):
+        plants_each_im[j] = iou_score(truth_label_map, pred_label_map, j)
+        iou[TYPES[j]].append(plants_each_im[j])
+    iou['index'].append(id_)
+    iou['im_avrg'].append(np.mean(plants_each_im))
+    print('IoU for this image is {}'.format(np.mean(plants_each_im)))
+
+
+def iou_mean(iou):
+    iou['index'].append('mean')
+    plant_total = np.zeros(N_CLASSES)
+    for j in range(len(COLORS)):
+        meanval = np.mean(iou[TYPES[j]])
+        iou[TYPES[j]].append(meanval)
+        plant_total[j] = meanval
+    iou_total = np.mean(plant_total)
+    iou['im_avrg'].append(iou_total)
+    print('average iou on test set is {}'.format(iou_total))
+    iou_table = pd.DataFrame(iou)
+    iou_table.to_csv(IOU_EVAL_FILE)
+    print('Complete Evaluation of Categorical IoU Score on Test Images and Saved to file {}'.format(IOU_EVAL_FILE))
+
+# def show_test_truth_prediction(test_image, mask, unet_mask,test_id,num):
+#     plt.figure(figsize=(8, 24))
+#     _, axes = plt.subplots(3, 1)
+#     axes[0].set_title('Original Image')
+#     axes[0].imshow(test_image)
+#     axes[1].set_title('Ground Truth')
+#     axes[1].imshow(mask)
+#     axes[2].set_title('Unet Predicted Mask')
+#     axes[2].imshow(unet_mask)
+#     plt.tight_layout()
+#     plt.show()
+#     plt.savefig('./results/mask'+test_id+num+'.png')
+
+#     imsave('./results/maskonly'+test_id+num+'.png', unet_mask)

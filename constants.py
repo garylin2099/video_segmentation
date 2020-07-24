@@ -96,7 +96,7 @@ IOU_TEST_RATIO = 1.0
 STAGE_TEST = 'train0-5_val6_no_augment'
 
 TEST_PATH = './single_frame/test/'
-IOU_EVAL_FILE = 'unet_iou_eval'+STAGE_TEST+'trainonly.csv'
+IOU_EVAL_FILE = './iou_table/iou_eval_'+STAGE_TEST+'_train.csv'
 
 TEST_MODEL =  ('{}/{}_{}_{}_'+STAGE_TEST+'.h5').format(MODEL_PATH, ARCHITECTURE, BACKBONE, LOSS_FN)
 # TEST_MODEL = LAST_SAVED_MODEL

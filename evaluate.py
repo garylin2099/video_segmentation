@@ -63,11 +63,18 @@ def evaluate(args):
         elif args.flow == 'flownet2':
             saver_fn.restore(sess, './checkpoints/flownet2')
 
+        # initialization to store iou
+        iou_dict = {}
+        iou_dict['index'] = []
+        for category in TYPES:
+            iou_dict[category] = []
+        iou_dict['im_avrg'] = []
+
         # L = glob.glob(os.path.join(cfg.cityscapes_dir, 'gtFine', data_split, "*", "*labelIds.png"))
         # L = glob.glob(os.path.join(VD_VALIDATION_PATH, "*.png"))
         L = glob.glob(os.path.join(VD_TRAIN_PATH, "*.png"))
-        for (progress_counter, im_path) in enumerate(L):
-            parts = im_path.split('/')[-1].split('_')
+        for (progress_counter, gt_path) in enumerate(L):
+            parts = gt_path.split('/')[-1].split('_')
             # city, seq, frame = parts[0], parts[1], parts[2]
             seq, frame = parts[0], parts[2]
 
@@ -117,13 +124,12 @@ def evaluate(args):
                 last_im = im
 
             # save it
-            S = pred[0]
+            S = pred[0] # S is a 2D predicted map, each entry 0-7, 512x512
             S_new = S.copy()
             # for (idx, train_idx) in cs_id2trainid.iteritems():
             #     S_new[S == train_idx] = idx
             
-            # print("final")
-            # print(np.unique(S_new))
+            categorical_iou_eval_each_im(gt_path, S, iou_dict)
 
             # output_path = '%s_%s_%s.png' % (city, seq, frame)
             if args.original_static == 1:
@@ -135,7 +141,8 @@ def evaluate(args):
             # cv2.imwrite(os.path.join(cfg.cityscapes_dir, 'results', output_path), S_new)
             S_color = labels_to_colors(S)
             cv2.imwrite(os.path.join('./pred_mask_train', output_path), S_color)
-
+        
+        iou_mean(iou)
 
         # # Evaluate using the official CityScapes code
         # evalPixelLevelSemanticLabeling.main([])
