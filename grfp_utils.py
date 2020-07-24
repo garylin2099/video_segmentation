@@ -6,14 +6,15 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 class DataLoader():
-    def __init__(self, im_size, nbr_frames):
+    def __init__(self, im_size, nbr_frames, data_path):
         self.im_size = im_size
         # self.dataset_size = [1024, 2048]
         self.nbr_frames = nbr_frames
         # self.L = glob.glob(os.path.join(cfg.cityscapes_dir, 'gtFine', 'train', "*", "*labelTrainIds.png"))
-        self.L = glob.glob(os.path.join(VD_TRAIN_PATH, "*.png"))
+        self.L = glob.glob(os.path.join(data_path, "*.png"))
         # random.shuffle(self.L)
         self.idx = 0
+        self.data_path = data_path
     
     def get_next_sequence(self):
         # H, W = self.dataset_size
@@ -41,7 +42,7 @@ class DataLoader():
             
             # frame_path = os.path.join(cfg.cityscapes_video_dir, 'leftImg8bit_sequence', 'train', 
             #         city, ("%s_%s_%06d_leftImg8bit.png" % (city, seq, t)))
-            frame_path = os.path.join(VD_TRAIN_PATH, ("%s_02_%02d_2020_cal.jpg" % (seq, t)))
+            frame_path = os.path.join(self.data_path, ("%s_02_%02d_2020_cal.jpg" % (seq, t)))
             # images.append(cv2.imread(frame_path, 1).astype(np.float32)[i0:i1,j0:j1][np.newaxis,...])
             im = cv2.imread(frame_path, 1)
             im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
@@ -57,13 +58,12 @@ class DataLoader():
         gt[gt == 187] = 4 # fix some individual masks for having intensity 178 as 187
         # print(np.unique(gt))
 
-def plot_loss_curve(results, title):
+def plot_loss_curve(results_train, results_val, title):
     plt.figure(figsize=(8, 8))
     plt.title(title)
-    # print(results)
-    plt.plot(range(len(results)), results, label="train_loss")
-    # plt.plot(exp_val_loss, label="val_loss")
-    # plt.plot(np.min(results), marker="x", color="r", label="lowest loss")
+    plt.plot(range(len(results_train)), results_train, label="train_loss")
+    plt.plot(range(len(results_val)), results_val, label="val_loss")
+    plt.plot(np.argmin(results_val), np.min(results_val), marker="x", color="r", label="lowest loss")
     plt.xlabel("iteration")
     plt.ylabel("loss")
     plt.legend()

@@ -30,7 +30,7 @@ def train(args):
     # static_learning_rate_lrr = 1 # second stage
     
     # The total number of iterations and when the static network should start being refined
-    nbr_iterations = 24000
+    nbr_iterations = 36000
     # t0_dilation_net = 5000
     t0_dilation_net = 0
 
@@ -53,6 +53,9 @@ def train(args):
         gru_input_segmentation_tensor, gru_targets = RNN.get_optimizer(args.frames)
     unary_grad_op = tf.gradients(gru_loss, gru_input_segmentation_tensor)
 
+    gru_loss_val, gru_input_images_tensor_val, gru_input_flow_tensor_val, \
+        gru_input_segmentation_tensor_val, gru_targets_val = RNN.get_validation_loss(args.frames)
+
     if args.static == 'lrr':
         static_input = tf.placeholder(tf.float32)
         static_network = LRR()
@@ -68,10 +71,13 @@ def train(args):
     np.random.seed(5)
     tf.compat.v1.random.set_random_seed(5)
 
-    data_loader = DataLoader(im_size, args.frames) # arg.frames is how many frames to use
+    data_loader = DataLoader(im_size, args.frames, VD_TRAIN_PATH) # arg.frames is how many frames to use
+    data_loader_val = DataLoader(im_size, args.frames, VD_VALIDATION_PATH)
 
     loss_history = np.zeros(nbr_iterations)
     loss_history_smoothed = np.zeros(nbr_iterations)
+    loss_history_val = np.zeros(nbr_iterations)
+    loss_history_smoothed_val = np.zeros(nbr_iterations)
 
     vars_trainable = [k for k in tf.trainable_variables() if not k.name.startswith('flow/')]
     vars_static = [k for k in vars_trainable if not k in RNN.weights.values()]
@@ -105,6 +111,7 @@ def train(args):
             saver_fn.restore(sess, './checkpoints/flownet2')
 
         for training_it in range(nbr_iterations):
+
             images, ground_truth = data_loader.get_next_sequence()
 
             # Optical flow
@@ -141,11 +148,38 @@ def train(args):
             _, loss, pred, unary_grads = sess.run([gru_opt, gru_loss, 
                gru_prediction, unary_grad_op], feed_dict=rnn_input)
             loss_history[training_it] = loss
+
+            ### validate as training goes ###
+            images_val, ground_truth_val = data_loader_val.get_next_sequence()
+            # Optical flow
+            optflow = []
+            for frame in range(1, args.frames):
+                im, last_im = images_val[frame], images_val[frame-1]
+                flow = sess.run(flow_tensor, feed_dict={flow_img0: im, flow_img1: last_im})
+                optflow.append(flow)
+            # Static segmentation
+            static_segm = []
+            for frame in range(args.frames):
+                im = images_val[frame]
+                x = static_network.predict(im)
+                static_segm.append(x)
+            # gru
+            rnn_input_val = {
+                gru_input_images_tensor_val: np.stack(images_val),
+                gru_input_flow_tensor_val: np.stack(optflow),
+                gru_input_segmentation_tensor_val: np.stack(static_segm),
+                gru_targets_val: ground_truth_val,
+            }
+            loss_val = sess.run(gru_loss_val, feed_dict=rnn_input_val)
+            loss_history_val[training_it] = loss_val
+            ### validation part ends ###
             
             if training_it < 300:
                 loss_history_smoothed[training_it] = np.mean(loss_history[0:training_it+1])
+                loss_history_smoothed_val[training_it] = np.mean(loss_history_val[0:training_it+1])
             else:
                 loss_history_smoothed[training_it] = 0.997*loss_history_smoothed[training_it-1] + 0.003*loss
+                loss_history_smoothed_val[training_it] = 0.997*loss_history_smoothed_val[training_it-1] + 0.003*loss_val
 
             # Refine the static network?
             # The reason that a two-stage training routine is used
@@ -162,18 +196,21 @@ def train(args):
             #         })
 
             if training_it > 0 and (training_it+1) % 6000 == 0:
-                saver.save(sess, './checkpoints/%s_%s_it%d' % (args.static, args.flow, training_it+1))
+                saver.save(sess, './checkpoints/%s_%s_f%d_it%d' % (args.static, args.flow, args.frames, training_it+1))
 
             if training_it >= 120 and training_it % 120 == 0:
                 print(np.mean(loss_history[(training_it-120): training_it]))
+                print(np.mean(loss_history_val[(training_it-20): training_it]))
 
             if (training_it+1) % 10 == 0:
-                print("Iteration %d/%d: Loss %.3f" % (training_it+1, nbr_iterations, loss_history_smoothed[training_it]))
+                print("Iteration %d/%d: Training Loss %.3f" % (training_it+1, nbr_iterations, loss_history_smoothed[training_it]))
+                print("Iteration %d/%d: Validation Loss %.3f" % (training_it+1, nbr_iterations, loss_history_smoothed_val[training_it]))
 
         # loss_hist_file = np.asarray(loss_history)
         # np.savetxt("./loss_hist/loss_hist_%s_%s_it%d.csv" % (args.static, args.flow, nbr_iterations + use_ckpt * 6000), loss_hist_file, delimiter=",")
 
-        plot_loss_curve(loss_history_smoothed, "%s_%s_loss_curve_f%d_lr-5" % (args.static, args.flow, args.frames))
+        plot_loss_curve(loss_history_smoothed, loss_history_smoothed_val, \
+            "%s_%s_loss_curve_f%d_lr-5" % (args.static, args.flow, args.frames))
 
 
 if __name__ == '__main__':
