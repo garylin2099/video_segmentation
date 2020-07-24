@@ -97,7 +97,14 @@ def colors_to_labels(gt_path):
     for i in range(len(TYPE_INTENSITY)):
         gt[gt == TYPE_INTENSITY[i]] = i
     gt[gt == 187] = 4 # fix some individual masks for having intensity 178 as 187
-    return gt
+    return gt # shape 512x512, each entry 0-7
+
+def gt_to_one_hot_map(gt_path):
+    gt = colors_to_labels(gt_path)
+    one_hot_map = np.zeros((1, gt.shape[0], gt.shape[1], N_CLASSES))
+    for i in range(N_CLASSES):
+        one_hot_map[0,:,:,i] = (gt == i)*1
+    return one_hot_map
 
 def categorical_iou_eval_each_im(gt_path, pred_label_map, iou):
     id_ = gt_path.split('/')[-1][:-4]

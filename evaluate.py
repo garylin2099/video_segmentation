@@ -70,10 +70,20 @@ def evaluate(args):
             iou_dict[category] = []
         iou_dict['im_avrg'] = []
 
+        if args.eval_set == 'train':
+            eval_path = VD_TRAIN_PATH
+            L = glob.glob(os.path.join(VD_TRAIN_PATH, "*.png"))
+        elif args.eval_set == 'val':
+            eval_path = VD_VALIDATION_PATH
+            L = glob.glob(os.path.join(VD_VALIDATION_PATH, "*.png"))
+        else:
+            eval_path = VD_TEST_PATH
+            L = glob.glob(os.path.join(VD_TEST_PATH, "*02_16_2020_cal.png"))
+        
         # L = glob.glob(os.path.join(cfg.cityscapes_dir, 'gtFine', data_split, "*", "*labelIds.png"))
         # L = glob.glob(os.path.join(VD_TRAIN_PATH, "*.png"))
         # L = glob.glob(os.path.join(VD_VALIDATION_PATH, "*.png"))
-        L = glob.glob(os.path.join(VD_TEST_PATH, "*02_16_2020_cal.png"))
+        # L = glob.glob(os.path.join(VD_TEST_PATH, "*02_16_2020_cal.png"))
         for (progress_counter, gt_path) in enumerate(L):
             parts = gt_path.split('/')[-1].split('_')
             # city, seq, frame = parts[0], parts[1], parts[2]
@@ -90,7 +100,8 @@ def evaluate(args):
                 
                 # frame_path = os.path.join(VD_TRAIN_PATH, ("%s_02_%02d_2020_cal.jpg" % (seq, t)))
                 # frame_path = os.path.join(VD_VALIDATION_PATH, ("%s_02_%02d_2020_cal.jpg" % (seq, t)))
-                frame_path = os.path.join(VD_TEST_PATH, ("%s_02_%02d_2020_cal.jpg" % (seq, t)))
+                # frame_path = os.path.join(VD_TEST_PATH, ("%s_02_%02d_2020_cal.jpg" % (seq, t)))
+                frame_path = os.path.join(eval_path, ("%s_02_%02d_2020_cal.jpg" % (seq, t)))
 
                 # im = cv2.imread(frame_path, 1).astype(np.float32)[np.newaxis,...]
                 im = cv2.imread(frame_path, 1)
@@ -108,11 +119,17 @@ def evaluate(args):
                     x = static_network.predict(im)
                 
                 if first_frame:
-                    # the hidden state is simple the static segmentation for the first frame
-                    h = x
-                    pred = np.argmax(h, axis=3)
-                    # print("first image")
-                    # print(np.unique(pred))
+                    first_gt = os.path.join(eval_path, ("%s_02_%02d_2020_cal.png" % (seq, t)))
+                    if args.frames != 1 and os.path.isfile(first_gt): # if first frame gt exists and we use grfp
+                        # leverage first gt mask in subsequent segmentation
+                        h = gt_to_one_hot_map(first_gt) # h is 1x512x512x7 0-1 map
+                        # print(h[0,:,:,0])
+                        # print(np.sum(h))
+                        print("use the ground truth mask of the first frame")
+                    else: # if first frame gt doesnt exist or we only use single-frame approach
+                        # the hidden state is simple the static segmentation for the first frame
+                        h = x # x shape (1, 512, 512, 7)
+                        pred = np.argmax(h, axis=3)
                 else:
                     inputs = {
                         input_images_tensor: np.stack([last_im, im]),
@@ -122,8 +139,6 @@ def evaluate(args):
                     }
                     # GRFP
                     h, pred = sess.run([new_h, prediction], feed_dict=inputs)
-                    # print("intermediate")
-                    # print(np.unique(pred))
 
                 last_im = im
 
@@ -161,6 +176,7 @@ if __name__ == '__main__':
     parser.add_argument('--frames', type=int, help='Number of frames to use.', default=5, required=False)
     parser.add_argument('--ckpt', help='Which checkpoint file to load from. Specify relative to the ./checkpoints/ directory.', default='', required=False)
     parser.add_argument('--original_static', type=int, help='whether to use original weights for static nn', default=0, required=False)
+    parser.add_argument('--eval_set', help='evaluate on train or val or test', default='test', required=False)
 
     args = parser.parse_args()
 
