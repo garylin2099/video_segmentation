@@ -120,9 +120,12 @@ def evaluate(args):
                 
                 if first_frame:
                     first_gt = os.path.join(eval_path, ("%s_02_%02d_2020_cal.png" % (seq, t)))
-                    if args.frames != 1 and os.path.isfile(first_gt): # if first frame gt exists and we use grfp
+                    if args.frames != 1 and args.first_gt == 1 and os.path.isfile(first_gt): # if first frame gt exists and we use grfp
                         # leverage first gt mask in subsequent segmentation
-                        h = gt_to_one_hot_map(first_gt) # h is 1x512x512x7 0-1 map
+                        h = gt_to_one_hot_map(first_gt).astype('float32') # h is 1x512x512x7 0-1 map
+                        # print(h.shape)
+                        # RNN.softmax_last_dim(h)
+                        # h = h * 10
                         # print(h[0,:,:,0])
                         # print(np.sum(h))
                         print("use the ground truth mask of the first frame")
@@ -138,6 +141,8 @@ def evaluate(args):
                         prev_h: h
                     }
                     # GRFP
+                    if dt == -1:
+                        RNN.get_GRU_cell(im, last_im, flow, h, x)
                     h, pred = sess.run([new_h, prediction], feed_dict=inputs)
 
                 last_im = im
@@ -177,6 +182,7 @@ if __name__ == '__main__':
     parser.add_argument('--ckpt', help='Which checkpoint file to load from. Specify relative to the ./checkpoints/ directory.', default='', required=False)
     parser.add_argument('--original_static', type=int, help='whether to use original weights for static nn', default=0, required=False)
     parser.add_argument('--eval_set', help='evaluate on train or val or test', default='test', required=False)
+    parser.add_argument('--first_gt', type=int, help='whether to use the first frame gt', default=1, required=False)
 
     args = parser.parse_args()
 
