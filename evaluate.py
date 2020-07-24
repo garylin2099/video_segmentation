@@ -71,8 +71,9 @@ def evaluate(args):
         iou_dict['im_avrg'] = []
 
         # L = glob.glob(os.path.join(cfg.cityscapes_dir, 'gtFine', data_split, "*", "*labelIds.png"))
+        # L = glob.glob(os.path.join(VD_TRAIN_PATH, "*.png"))
         # L = glob.glob(os.path.join(VD_VALIDATION_PATH, "*.png"))
-        L = glob.glob(os.path.join(VD_TRAIN_PATH, "*.png"))
+        L = glob.glob(os.path.join(VD_TEST_PATH, "*02_16_2020_cal.png"))
         for (progress_counter, gt_path) in enumerate(L):
             parts = gt_path.split('/')[-1].split('_')
             # city, seq, frame = parts[0], parts[1], parts[2]
@@ -86,8 +87,11 @@ def evaluate(args):
                 # frame_path = os.path.join(cfg.cityscapes_video_dir, 'leftImg8bit_sequence', data_split, 
                 #         city, ("%s_%s_%06d_leftImg8bit.png" % (city, seq, t)))
                 # im = cv2.imread(frame_path, 1).astype(np.float32)[np.newaxis,...]
+                
+                # frame_path = os.path.join(VD_TRAIN_PATH, ("%s_02_%02d_2020_cal.jpg" % (seq, t)))
                 # frame_path = os.path.join(VD_VALIDATION_PATH, ("%s_02_%02d_2020_cal.jpg" % (seq, t)))
-                frame_path = os.path.join(VD_TRAIN_PATH, ("%s_02_%02d_2020_cal.jpg" % (seq, t)))
+                frame_path = os.path.join(VD_TEST_PATH, ("%s_02_%02d_2020_cal.jpg" % (seq, t)))
+
                 # im = cv2.imread(frame_path, 1).astype(np.float32)[np.newaxis,...]
                 im = cv2.imread(frame_path, 1)
                 im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB).astype(np.float32)[np.newaxis,...]
@@ -142,7 +146,7 @@ def evaluate(args):
             S_color = labels_to_colors(S)
             cv2.imwrite(os.path.join('./pred_mask_train', output_path), S_color)
         
-        iou_mean(iou)
+        iou_mean(iou_dict)
 
         # # Evaluate using the official CityScapes code
         # evalPixelLevelSemanticLabeling.main([])

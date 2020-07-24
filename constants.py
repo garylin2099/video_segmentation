@@ -8,10 +8,11 @@
 STAGE = 'train0-5_val6_no_augment'
 
 VD_TRAIN_PATH = './video/train/'
-VD_VALIDATION_PATH = './video/val'
+VD_VALIDATION_PATH = './video/val/'
 SF_TRAIN_PATH = './single_frame/train/'
-SF_VALIDATION_PATH = './single_frame/val'
+# SF_VALIDATION_PATH = './single_frame/val/'
 MODEL_PATH = './models_saved'
+VD_TEST_PATH = './video/test/'
 
 IM_WIDTH = 512
 IM_HEIGHT = 512
