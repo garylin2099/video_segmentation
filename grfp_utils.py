@@ -130,7 +130,7 @@ def iou_mean(iou):
         plant_total[j] = meanval
     iou_total = np.mean(plant_total)
     iou['im_avrg'].append(iou_total)
-    print('average iou on test set is {:.3f}'.format(iou_total))
+    print('average iou on test set is {:.8f}'.format(iou_total))
     iou_table = pd.DataFrame(iou)
     iou_table.to_csv(IOU_EVAL_FILE)
     print('Complete Evaluation of Categorical IoU Score on Test Images and Saved to file {}'.format(IOU_EVAL_FILE))

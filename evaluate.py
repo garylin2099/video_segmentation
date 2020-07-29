@@ -38,6 +38,9 @@ def evaluate(args):
     input_images_tensor, input_flow, \
         input_segmentation, prev_h, new_h, \
         prediction = RNN.get_one_step_predictor()
+    
+    # h_input = tf.placeholder(tf.float32)
+    # softmax_result = RNN.softmax_last_dim(h_input)
 
     if args.static == 'lrr':
         static_input = tf.placeholder(tf.float32)
@@ -78,7 +81,7 @@ def evaluate(args):
             L = glob.glob(os.path.join(VD_VALIDATION_PATH, "*.png"))
         else:
             eval_path = VD_TEST_PATH
-            L = glob.glob(os.path.join(VD_TEST_PATH, "*02_16_2020_cal.png"))
+            L = glob.glob(os.path.join(VD_TEST_PATH, "*02_15_2020_cal.png"))
         
         # L = glob.glob(os.path.join(cfg.cityscapes_dir, 'gtFine', data_split, "*", "*labelIds.png"))
         # L = glob.glob(os.path.join(VD_TRAIN_PATH, "*.png"))
@@ -91,6 +94,7 @@ def evaluate(args):
 
             # print("Processing sequence %d/%d" % (progress_counter+1, len(L)))
             for dt in range(-args.frames + 1, 1):
+            # for dt in range(-args.frames + 1, 1, 2):
                 first_frame = dt == -args.frames + 1
                 t = int(frame) + dt
                 
@@ -124,10 +128,9 @@ def evaluate(args):
                         # leverage first gt mask in subsequent segmentation
                         h = gt_to_one_hot_map(first_gt).astype('float32') # h is 1x512x512x7 0-1 map
                         # print(h.shape)
-                        # RNN.softmax_last_dim(h)
-                        # h = h * 10
-                        # print(h[0,:,:,0])
-                        # print(np.sum(h))
+                        h = h * 10
+                        # y_h = sess.run(softmax_result, feed_dict={h_input: h})
+                        # print(y_h[0,50,50,:])
                         print("use the ground truth mask of the first frame")
                     else: # if first frame gt doesnt exist or we only use single-frame approach
                         # the hidden state is simple the static segmentation for the first frame
@@ -141,8 +144,8 @@ def evaluate(args):
                         prev_h: h
                     }
                     # GRFP
-                    if dt == -1:
-                        RNN.get_GRU_cell(im, last_im, flow, h, x)
+                    # if dt == -1:
+                    #     RNN.get_GRU_cell(im, last_im, flow, h, x)
                     h, pred = sess.run([new_h, prediction], feed_dict=inputs)
 
                 last_im = im

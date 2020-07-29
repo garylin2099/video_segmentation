@@ -86,11 +86,7 @@ class STGRU:
 
     def get_GRU_cell(self, input_image, prev_image, flow_input, h_prev, unary_input):
         # apply softmax to h_prev and unary_input
-        # print("before softmax")
-        # print(h_prev)
         h_prev = self.softmax_last_dim(h_prev)
-        # print("after softmax")
-        # print(h_prev)
         unary_input = self.softmax_last_dim(unary_input)
         # h_prev = h_prev - 1./19
         h_prev = h_prev - 1./7
@@ -123,11 +119,6 @@ class STGRU:
         return h
 
     def softmax_last_dim(self, x):
-        # print("ok")
-        # print(np.sum(x))
-        if np.sum(x) == 1 * x.shape[1] * x.shape[2]: # 1 * 512x512
-            print("gt mask passed in, no need to softmax")
-            return x
         # apply softmax to a 4D tensor along the last dimension
         S = tf.shape(x)
         y = tf.reshape(x, [-1, S[4-1]])
