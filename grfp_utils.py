@@ -20,7 +20,7 @@ class DataLoader():
         # H, W = self.dataset_size
         h, w = self.im_size
 
-        # shuffle at each new epoch
+        # shuffle at each new epoch, not in original code
         if (self.idx + 1) % len(self.L) == 0:
             random.shuffle(self.L)
 
@@ -121,7 +121,7 @@ def categorical_iou_eval_each_im(gt_path, pred_label_map, iou):
     print('IoU for this image is {:.3f}'.format(np.mean(plants_each_im)))
 
 
-def iou_mean(iou):
+def iou_mean(iou, file_name):
     iou['index'].append('mean')
     plant_total = np.zeros(N_CLASSES)
     for j in range(len(COLORS)):
@@ -132,7 +132,7 @@ def iou_mean(iou):
     iou['im_avrg'].append(iou_total)
     print('average iou on test set is {:.8f}'.format(iou_total))
     iou_table = pd.DataFrame(iou)
-    iou_table.to_csv(IOU_EVAL_FILE)
+    iou_table.to_csv(IOU_EVAL_FILE + file_name)
     print('Complete Evaluation of Categorical IoU Score on Test Images and Saved to file {}'.format(IOU_EVAL_FILE))
 
 # def show_test_truth_prediction(test_image, mask, unet_mask,test_id,num):

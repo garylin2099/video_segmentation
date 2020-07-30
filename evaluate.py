@@ -81,7 +81,7 @@ def evaluate(args):
             L = glob.glob(os.path.join(VD_VALIDATION_PATH, "*.png"))
         else:
             eval_path = VD_TEST_PATH
-            L = glob.glob(os.path.join(VD_TEST_PATH, "*02_15_2020_cal.png"))
+            L = glob.glob(os.path.join(VD_TEST_PATH, "*02_1[56]_2020_cal.png"))
         
         # L = glob.glob(os.path.join(cfg.cityscapes_dir, 'gtFine', data_split, "*", "*labelIds.png"))
         # L = glob.glob(os.path.join(VD_TRAIN_PATH, "*.png"))
@@ -160,19 +160,15 @@ def evaluate(args):
 
             # output_path = '%s_%s_%s.png' % (city, seq, frame)
             if args.original_static == 1:
-                # print("write, fix")
-                output_path = '%s_02_%s_pred_%df_fix.png' % (seq, frame, args.frames)
+                # output_path = '%s_02_%s_pred_%df_fix.png' % (seq, frame, args.frames)
+                output_path = '%s_02_%s_pred_%s_inf%d_fix.png' % (seq, frame, args.ckpt[14:], args.frames)
             else:
-                # print("write, end to end")
-                output_path = '%s_02_%s_pred_%df.png' % (seq, frame, args.frames)
+                output_path = '%s_02_%s_pred_%s_inf%d.png' % (seq, frame, args.ckpt[14:], args.frames)
             # cv2.imwrite(os.path.join(cfg.cityscapes_dir, 'results', output_path), S_new)
             S_color = labels_to_colors(S)
-            cv2.imwrite(os.path.join('./pred_mask_train', output_path), S_color)
+            cv2.imwrite(os.path.join('./pred_mask_%s' % args.eval_set, output_path), S_color)
         
-        iou_mean(iou_dict)
-
-        # # Evaluate using the official CityScapes code
-        # evalPixelLevelSemanticLabeling.main([])
+        iou_mean(iou_dict, '%s_inf%d_fix%d_gt%d_%s.csv' % (args.ckpt[14:], args.frames, args.original_static, args.first_gt, args.eval_set))
 
 
 

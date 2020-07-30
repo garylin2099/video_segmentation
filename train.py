@@ -24,15 +24,15 @@ def train(args):
     nbr_classes = 7
 
     # learning rates for the GRU and the static segmentation networks, respectively
-    learning_rate = 2e-5 # original paper
-    # learning_rate = 1 # second stage
+    # learning_rate = 2e-5 # original paper
+    learning_rate = 2e-5
     # static_learning_rate = 2e-12 # original paper
     # static_learning_rate_lrr = 1 # second stage
     
     # The total number of iterations and when the static network should start being refined
-    nbr_iterations = 36000
+    nbr_iterations = 24000
     # t0_dilation_net = 5000
-    t0_dilation_net = 0
+    # t0_dilation_net = 0
 
     im_size = [512, 512]
     # image_mean = [72.39,82.91,73.16] # the mean is automatically subtracted in some modules e.g. flownet2, so be careful
@@ -99,6 +99,7 @@ def train(args):
         #     saver.restore(sess, './checkpoints/dilation_grfp')
         if args.static == 'unet':
             static_network.load_weights(TEST_MODEL)
+            print("use pre-trained unet at %s" % TEST_MODEL)
 
         use_ckpt = 0
         if args.ckpt is not None and args.ckpt != '':
@@ -109,6 +110,8 @@ def train(args):
             saver_fn.restore(sess, './checkpoints/flownet1')
         elif args.flow == 'flownet2':
             saver_fn.restore(sess, './checkpoints/flownet2')
+        
+        min_val_loss = 1e6
 
         for training_it in range(nbr_iterations):
 
@@ -138,7 +141,7 @@ def train(args):
             # GRFP
             rnn_input = {
                 # gru_learning_rate: learning_rate,
-                gru_learning_rate: learning_rate * (1-(training_it+1)/nbr_iterations)**2,
+                gru_learning_rate: learning_rate * (1-(training_it+1)/nbr_iterations),
                 gru_input_images_tensor: np.stack(images),
                 gru_input_flow_tensor: np.stack(optflow),
                 gru_input_segmentation_tensor: np.stack(static_segm),
@@ -195,22 +198,32 @@ def train(args):
             #           ,static_learning_rate: static_learning_rate_lrr * (1-(training_it+1)/nbr_iterations)**2
             #         })
 
-            if training_it > 0 and (training_it+1) % 6000 == 0:
-                saver.save(sess, './checkpoints/%s_%s_f%d_it%d' % (args.static, args.flow, args.frames, training_it+1))
-
-            if training_it >= 120 and training_it % 120 == 0:
-                print(np.mean(loss_history[(training_it-120): training_it]))
-                print(np.mean(loss_history_val[(training_it-20): training_it]))
-
             if (training_it+1) % 10 == 0:
                 print("Iteration %d/%d: Training Loss %.3f" % (training_it+1, nbr_iterations, loss_history_smoothed[training_it]))
                 print("Iteration %d/%d: Validation Loss %.3f" % (training_it+1, nbr_iterations, loss_history_smoothed_val[training_it]))
+
+            if training_it+1 >= 600 and (training_it+1) % 120 == 0:
+                print("epoch %d result" % ((training_it+1) / 120))
+                print(np.mean(loss_history[(training_it+1-120): (training_it+1)]))
+                print(np.mean(loss_history_val[(training_it+1-20): (training_it+1)])) # 20 images in validation set
+
+                val_loss_last_epoch = np.mean(loss_history_val[(training_it+1-20): (training_it+1)])
+                if val_loss_last_epoch < min_val_loss:
+                    saver.save(sess, './checkpoints/%s_%s_tr%d_best' % (args.static, args.flow, args.frames))
+                    print("validation loss improved from %.4f to %.4f, save checkpoint, training epoch is %d" %\
+                         (min_val_loss, val_loss_last_epoch, (training_it+1) / 120))
+                    min_val_loss = val_loss_last_epoch
+                else:
+                    print("validation loss didn't improve from %.4f" % min_val_loss)
+
+            if training_it > 0 and (training_it+1) % 6000 == 0:
+                saver.save(sess, './checkpoints/%s_%s_tr%d_it%d' % (args.static, args.flow, args.frames, training_it+1))
 
         # loss_hist_file = np.asarray(loss_history)
         # np.savetxt("./loss_hist/loss_hist_%s_%s_it%d.csv" % (args.static, args.flow, nbr_iterations + use_ckpt * 6000), loss_hist_file, delimiter=",")
 
         plot_loss_curve(loss_history_smoothed, loss_history_smoothed_val, \
-            "%s_%s_loss_curve_f%d_lr-5" % (args.static, args.flow, args.frames))
+            "%s_%s_loss_curve_f%d" % (args.static, args.flow, args.frames))
 
 
 if __name__ == '__main__':
