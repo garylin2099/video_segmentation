@@ -7,12 +7,12 @@
 # STAGE = 'all'
 # STAGE = 'train0-5_val6_no_augment'
 
-VD_TRAIN_PATH = './video/train/'
-VD_VALIDATION_PATH = './video/val/'
-SF_TRAIN_PATH = './single_frame/train/'
+VD_TRAIN_PATH = './video_new/train/'
+VD_VALIDATION_PATH = './video_new/val/'
+SF_TRAIN_PATH = './single_frame_new/train/'
 # SF_VALIDATION_PATH = './single_frame/val/'
 MODEL_PATH = './models_saved'
-VD_TEST_PATH = './video/test/'
+VD_TEST_PATH = './video_new/test/'
 
 IM_WIDTH = 512
 IM_HEIGHT = 512
@@ -95,7 +95,7 @@ IOU_TEST_RATIO = 1.0
 # STAGE_TEST = 'Pruned'
 # STAGE_TEST = 'Flowering'
 # STAGE_TEST = 'train0-5_val6_no_augment'
-STAGE_TEST = 'sf'
+STAGE_TEST = 'sf_new_split'
 
 TEST_PATH = './single_frame/test/'
 IOU_EVAL_FILE = './iou_table/'

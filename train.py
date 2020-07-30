@@ -30,7 +30,7 @@ def train(args):
     # static_learning_rate_lrr = 1 # second stage
     
     # The total number of iterations and when the static network should start being refined
-    nbr_iterations = 24000
+    nbr_iterations = 5600
     # t0_dilation_net = 5000
     # t0_dilation_net = 0
 
@@ -67,9 +67,9 @@ def train(args):
     elif args.static == 'unet':
         static_network = sm.Unet(backbone_name=BACKBONE, encoder_weights=None, activation=ACTIVATION_FN, classes=N_CLASSES)
 
-    random.seed(5)
-    np.random.seed(5)
-    tf.compat.v1.random.set_random_seed(5)
+    # random.seed(5)
+    # np.random.seed(5)
+    # tf.compat.v1.random.set_random_seed(5)
 
     data_loader = DataLoader(im_size, args.frames, VD_TRAIN_PATH) # arg.frames is how many frames to use
     data_loader_val = DataLoader(im_size, args.frames, VD_VALIDATION_PATH)
@@ -103,7 +103,7 @@ def train(args):
 
         use_ckpt = 0
         if args.ckpt is not None and args.ckpt != '':
-            saver.restore(sess, './checkpoints/%s' % (args.ckpt))
+            saver.restore(sess, './checkpoints/round1/%s' % (args.ckpt))
             use_ckpt = 1
 
         if args.flow == 'flownet1':
@@ -198,25 +198,25 @@ def train(args):
             #           ,static_learning_rate: static_learning_rate_lrr * (1-(training_it+1)/nbr_iterations)**2
             #         })
 
-            if (training_it+1) % 10 == 0:
+            if (training_it+1) % 20 == 0:
                 print("Iteration %d/%d: Training Loss %.3f" % (training_it+1, nbr_iterations, loss_history_smoothed[training_it]))
                 print("Iteration %d/%d: Validation Loss %.3f" % (training_it+1, nbr_iterations, loss_history_smoothed_val[training_it]))
 
-            if training_it+1 >= 600 and (training_it+1) % 120 == 0:
-                print("epoch %d result" % ((training_it+1) / 120))
-                print(np.mean(loss_history[(training_it+1-120): (training_it+1)]))
-                print(np.mean(loss_history_val[(training_it+1-20): (training_it+1)])) # 20 images in validation set
+            if training_it+1 >= 112 and (training_it+1) % 112 == 0:
+                print("epoch %d result" % ((training_it+1) / 112))
+                print(np.mean(loss_history[(training_it+1-112): (training_it+1)]))
+                print(np.mean(loss_history_val[(training_it+1-28): (training_it+1)])) # 28 images in validation set
 
-                val_loss_last_epoch = np.mean(loss_history_val[(training_it+1-20): (training_it+1)])
+                val_loss_last_epoch = np.mean(loss_history_val[(training_it+1-28): (training_it+1)])
                 if val_loss_last_epoch < min_val_loss:
                     saver.save(sess, './checkpoints/%s_%s_tr%d_best' % (args.static, args.flow, args.frames))
                     print("validation loss improved from %.4f to %.4f, save checkpoint, training epoch is %d" %\
-                         (min_val_loss, val_loss_last_epoch, (training_it+1) / 120))
+                         (min_val_loss, val_loss_last_epoch, (training_it+1) / 112))
                     min_val_loss = val_loss_last_epoch
                 else:
                     print("validation loss didn't improve from %.4f" % min_val_loss)
 
-            if training_it > 0 and (training_it+1) % 6000 == 0:
+            if training_it > 0 and (training_it+1) % 5600 == 0:
                 saver.save(sess, './checkpoints/%s_%s_tr%d_it%d' % (args.static, args.flow, args.frames, training_it+1))
 
         # loss_hist_file = np.asarray(loss_history)

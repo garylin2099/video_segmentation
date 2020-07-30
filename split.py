@@ -25,7 +25,7 @@ IMG_MASK_PATH = "./overhead_0202_to_0216/"
 
 def saveSplit(ids,chunk_num):
     ### Adjust Split Folder###
-    save_path = "./video_all/"
+    save_path = "./video_all_new/"
 
     ### Adjust photo ###
     for _, id_ in tqdm_notebook(enumerate(ids), total=len(ids)):
@@ -58,8 +58,12 @@ def split2(im):
     # print(im.shape)
     ret = []
 
-    for i in np.arange(0, im.shape[0] - IM_HEIGHT, IM_HEIGHT):
-        for j in np.arange(0, im.shape[1] - IM_WIDTH, IM_WIDTH):
+    # for i in np.arange(0, im.shape[0] - IM_HEIGHT, IM_HEIGHT):
+    #     for j in np.arange(0, im.shape[1] - IM_WIDTH, IM_WIDTH):
+    #         s = im[i:i+IM_HEIGHT, j:j+IM_WIDTH]
+    #         ret.append(s)
+    for j in np.arange(0, im.shape[1] - IM_WIDTH, IM_WIDTH):
+        for i in np.arange(0, im.shape[0] - IM_HEIGHT, IM_HEIGHT):
             s = im[i:i+IM_HEIGHT, j:j+IM_WIDTH]
             ret.append(s)
 

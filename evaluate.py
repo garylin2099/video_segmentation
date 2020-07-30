@@ -81,7 +81,8 @@ def evaluate(args):
             L = glob.glob(os.path.join(VD_VALIDATION_PATH, "*.png"))
         else:
             eval_path = VD_TEST_PATH
-            L = glob.glob(os.path.join(VD_TEST_PATH, "*02_1[56]_2020_cal.png"))
+            # L = glob.glob(os.path.join(VD_TEST_PATH, "*02_1[56]_2020_cal.png"))
+            L = glob.glob(os.path.join(VD_TEST_PATH, "*.png"))
         
         # L = glob.glob(os.path.join(cfg.cityscapes_dir, 'gtFine', data_split, "*", "*labelIds.png"))
         # L = glob.glob(os.path.join(VD_TRAIN_PATH, "*.png"))
