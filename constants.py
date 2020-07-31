@@ -23,8 +23,10 @@ N_EPOCHS = 100
 RANDOM_SEED = 42
 
 BACKBONE = 'resnet18'
+# BACKBONE = 'seresnet18'
 ARCHITECTURE = 'unet'
 ACTIVATION_FN = 'relu'
+# ACTIVATION_FN = 'softmax'
 
 LOSS_FN = 'weighted_jaccard'
 

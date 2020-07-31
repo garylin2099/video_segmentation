@@ -160,3 +160,48 @@ class STGRU:
         
         return loss, \
             input_images_tensor, input_flow_tensor, input_segmentation_tensor, targets
+        
+    def print_GRU_cell(self, input_image, prev_image, flow_input, h_prev, unary_input):
+        # apply softmax to h_prev and unary_input
+        h_prev = self.softmax_last_dim(h_prev)
+        unary_input = self.softmax_last_dim(unary_input)
+        # h_prev = h_prev - 1./19
+        h_prev = h_prev - 1./7
+        # unary_input = unary_input - 1./19
+        unary_input = unary_input - 1./7
+
+        I_diff = input_image - self.bilinear_warping_module.bilinear_warping(prev_image, flow_input)
+        
+        # candidate state
+        h_prev_warped = self.bilinear_warping_module.bilinear_warping(h_prev, flow_input)
+
+        r = 1. - tf.tanh(tf.abs(tf.nn.conv2d(I_diff, self.weights['ir'], [1,1,1,1], padding='SAME') \
+            + self.weights['bias_r']))
+        
+        h_prev_reset = h_prev_warped * r
+
+        h_tilde = tf.nn.conv2d(unary_input, self.weights['xh'], [1,1,1,1], padding='SAME') \
+          + tf.nn.conv2d(h_prev_reset, self.weights['hh'], [1,1,1,1], padding='SAME')
+
+        
+        # weighting
+        z = tf.sigmoid( \
+            tf.nn.conv2d(unary_input, self.weights['xz'], [1,1,1,1], padding='SAME') \
+            + tf.nn.conv2d(h_prev_reset, self.weights['hz'], [1,1,1,1], padding='SAME') \
+            + self.weights['bias_z']
+          )
+        
+        # current vs previous
+        xh_x = tf.nn.conv2d(unary_input, self.weights['xh'], [1,1,1,1], padding='SAME')
+        hh_r = tf.nn.conv2d(h_prev_reset, self.weights['hh'], [1,1,1,1], padding='SAME')
+        xz_x = tf.nn.conv2d(unary_input, self.weights['xz'], [1,1,1,1], padding='SAME')
+        hz_r = tf.nn.conv2d(h_prev_reset, self.weights['hz'], [1,1,1,1], padding='SAME')
+
+        h = self.weights['lambda']*(1 - z)*h_prev_reset + z*h_tilde
+
+        # return h
+        return h, r, h_prev_warped, h_prev_reset, h_tilde, z,\
+            xh_x, hh_r, xz_x, hz_r
+    
+    def print_weights(self):
+        return self.weights

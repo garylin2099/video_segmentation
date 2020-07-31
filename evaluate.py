@@ -12,6 +12,7 @@ from tensorflow.python.framework import ops
 from constants import *
 import segmentation_models as sm
 from grfp_utils import *
+from collections import OrderedDict
 
 bilinear_warping_module = tf.load_op_library('./misc/bilinear_warping.so')
 @ops.RegisterGradient("BilinearWarping")
@@ -41,6 +42,15 @@ def evaluate(args):
     
     # h_input = tf.placeholder(tf.float32)
     # softmax_result = RNN.softmax_last_dim(h_input)
+    # weight_check = RNN.print_weights()
+
+    # im0 = tf.placeholder(tf.float32)
+    # last_im0 = tf.placeholder(tf.float32)
+    # flow0 = tf.placeholder(tf.float32)
+    # h0 = tf.placeholder(tf.float32)
+    # x0 = tf.placeholder(tf.float32)
+    # h_check0, r0, h_prev_warped0, h_prev_reset0, h_tilde0, z0, xh_x0, hh_r0, xz_x0, hz_r0 =\
+    #      RNN.print_GRU_cell(im0, last_im0, flow0, h0, x0)
 
     if args.static == 'lrr':
         static_input = tf.placeholder(tf.float32)
@@ -66,8 +76,13 @@ def evaluate(args):
         elif args.flow == 'flownet2':
             saver_fn.restore(sess, './checkpoints/flownet2')
 
+        # weight_print = sess.run(weight_check)
+        # for k, v in weight_print.items():
+        #     print("%s, max %.5f, min %.5f, mean %.5f" % (k, np.max(v), np.min(v), np.mean(v)))
+        #     # print(v)
+
         # initialization to store iou
-        iou_dict = {}
+        iou_dict = OrderedDict()
         iou_dict['index'] = []
         for category in TYPES:
             iou_dict[category] = []
@@ -130,6 +145,7 @@ def evaluate(args):
                         h = gt_to_one_hot_map(first_gt).astype('float32') # h is 1x512x512x7 0-1 map
                         # print(h.shape)
                         h = h * 10
+                        # h = h * 0 # let mask be random
                         # y_h = sess.run(softmax_result, feed_dict={h_input: h})
                         # print(y_h[0,50,50,:])
                         print("use the ground truth mask of the first frame")
@@ -145,8 +161,52 @@ def evaluate(args):
                         prev_h: h
                     }
                     # GRFP
-                    # if dt == -1:
-                    #     RNN.get_GRU_cell(im, last_im, flow, h, x)
+
+                    #### check weights to diagnose ###
+                    # input0 = {
+                    #     im0: im, last_im0: last_im, flow0: flow, h0: h, x0: x
+                    # }
+                    # h_check, r, h_prev_warped, h_prev_reset, h_tilde, z, xh_x, hh_r, xz_x, hz_r = \
+                    #     sess.run([h_check0, r0, h_prev_warped0, h_prev_reset0, h_tilde0, z0, xh_x0, hh_r0, xz_x0, hz_r0],\
+                    #          feed_dict = input0)
+                    # print("h, max %.5f, min %.5f, mean %.5f" % (np.max(h_check), np.min(h_check), np.mean(h_check)))
+                    # print("r, max %.5f, min %.5f, mean %.5f" % (np.max(r), np.min(r), np.mean(r)))
+                    # print("h_prev_warped, max %.5f, min %.5f, mean %.5f" % (np.max(h_prev_warped), np.min(h_prev_warped), np.mean(h_prev_warped)))
+                    # print("h_prev_reset, max %.5f, min %.5f, mean %.5f" % (np.max(h_prev_reset), np.min(h_prev_reset), np.mean(h_prev_reset)))
+                    # print("h_tilde, max %.5f, min %.5f, mean %.5f" % (np.max(h_tilde), np.min(h_tilde), np.mean(h_tilde)))
+                    # print("z, max %.5f, min %.5f, mean %.5f" % (np.max(z), np.min(z), np.mean(z)))
+                    # print("h_reset")
+                    # print(np.sum(h_prev_reset != 0))
+                    # print(np.sum(np.abs(h_prev_reset) > 0.01))
+                    # print(np.sum(np.abs(h_prev_reset) > 0.1))
+                    # print("r")
+                    # print(np.sum(r != 0))
+                    # print(np.sum(np.abs(r) > 0.01))
+                    # print(np.sum(np.abs(r) > 0.1))
+                    # print("h_prev_warped")
+                    # print(np.sum(h_prev_warped != 0))
+                    # print(np.sum(np.abs(h_prev_warped) > 0.01))
+                    # print(np.sum(np.abs(h_prev_warped) > 0.1))
+                    # print("next")
+                    # print("xh_x")
+                    # print(np.sum(xh_x != 0))
+                    # print(np.sum(np.abs(xh_x) > 0.01))
+                    # print(np.sum(np.abs(xh_x) > 0.1))
+                    # print("hh_r")
+                    # print(np.sum(hh_r != 0))
+                    # print(np.sum(np.abs(hh_r) > 0.01))
+                    # print(np.sum(np.abs(hh_r) > 0.1))
+                    # print("xz_x")
+                    # print(np.sum(xz_x != 0))
+                    # print(np.sum(np.abs(xz_x) > 0.01))
+                    # print(np.sum(np.abs(xz_x) > 0.1))
+                    # print("hz_r")
+                    # print(np.sum(hz_r != 0))
+                    # print(np.sum(np.abs(hz_r) > 0.01))
+                    # print(np.sum(np.abs(hz_r) > 0.1))
+                    # print("next")
+                    ################
+
                     h, pred = sess.run([new_h, prediction], feed_dict=inputs)
 
                 last_im = im
