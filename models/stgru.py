@@ -201,7 +201,7 @@ class STGRU:
 
         # return h
         return h, r, h_prev_warped, h_prev_reset, h_tilde, z,\
-            xh_x, hh_r, xz_x, hz_r
+            xh_x, hh_r, xz_x, hz_r, h_prev
     
     def print_weights(self):
         return self.weights

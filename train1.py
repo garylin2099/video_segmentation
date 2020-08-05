@@ -25,7 +25,7 @@ def train(args):
 
     # learning rates for the GRU and the static segmentation networks, respectively
     # learning_rate = 2e-5 # original paper
-    learning_rate = 0.1
+    learning_rate = 0.001
     # static_learning_rate = 2e-12 # original paper
     # static_learning_rate_lrr = 1 # second stage
     
@@ -140,8 +140,8 @@ def train(args):
 
             # GRFP
             rnn_input = {
-                # gru_learning_rate: learning_rate,
-                gru_learning_rate: learning_rate * (1-(training_it+1)/nbr_iterations),
+                gru_learning_rate: learning_rate,
+                # gru_learning_rate: learning_rate * (1-(training_it+1)/nbr_iterations),
                 gru_input_images_tensor: np.stack(images),
                 gru_input_flow_tensor: np.stack(optflow),
                 gru_input_segmentation_tensor: np.stack(static_segm),
@@ -209,7 +209,7 @@ def train(args):
 
                 val_loss_last_epoch = np.mean(loss_history_val[(training_it+1-28): (training_it+1)])
                 if val_loss_last_epoch < min_val_loss:
-                    saver.save(sess, './checkpoints/%s_%s_tr%d_best_lr-1' % (args.static, args.flow, args.frames))
+                    saver.save(sess, './checkpoints/%s_%s_tr%d_best_lr-3' % (args.static, args.flow, args.frames))
                     print("validation loss improved from %.4f to %.4f, save checkpoint, training epoch is %d" %\
                          (min_val_loss, val_loss_last_epoch, (training_it+1) / 112))
                     min_val_loss = val_loss_last_epoch
@@ -217,13 +217,13 @@ def train(args):
                     print("validation loss didn't improve from %.4f" % min_val_loss)
 
             if training_it > 0 and (training_it+1) % 5600 == 0:
-                saver.save(sess, './checkpoints/%s_%s_tr%d_it%d_lr-1' % (args.static, args.flow, args.frames, training_it+1))
+                saver.save(sess, './checkpoints/%s_%s_tr%d_it%d_lr-3' % (args.static, args.flow, args.frames, training_it+1))
 
         # loss_hist_file = np.asarray(loss_history)
         # np.savetxt("./loss_hist/loss_hist_%s_%s_it%d.csv" % (args.static, args.flow, nbr_iterations + use_ckpt * 6000), loss_hist_file, delimiter=",")
 
         plot_loss_curve(loss_history_smoothed, loss_history_smoothed_val, \
-            "%s_%s_loss_curve_f%d_lr-1" % (args.static, args.flow, args.frames))
+            "%s_%s_loss_curve_f%d_lr-3" % (args.static, args.flow, args.frames))
 
 
 if __name__ == '__main__':
