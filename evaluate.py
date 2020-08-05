@@ -52,16 +52,20 @@ def evaluate(args):
     h_check0, r0, h_prev_warped0, h_prev_reset0, h_tilde0, z0, xh_x0, hh_r0, xz_x0, hz_r0, h_prev_check0 =\
          RNN.print_GRU_cell(im0, last_im0, flow0, h0, x0)
 
-    if args.static == 'lrr':
-        static_input = tf.placeholder(tf.float32)
-        static_network = LRR()
-        static_output = static_network(static_input)
-    elif args.static == 'unet':
-        static_network = sm.Unet(backbone_name=BACKBONE, encoder_weights=None, activation=ACTIVATION_FN, classes=N_CLASSES)
+    # if args.static == 'lrr':
+    #     static_input = tf.placeholder(tf.float32)
+    #     static_network = LRR()
+    #     static_output = static_network(static_input)
+    # elif args.static == 'unet':
+    #     static_network = sm.Unet(backbone_name=BACKBONE, encoder_weights=None, activation=ACTIVATION_FN, classes=N_CLASSES)
 
     saver = tf.train.Saver([k for k in tf.global_variables() if not k.name.startswith('flow/')])
+    # saver = tf.train.Saver([k for k in tf.trainable_variables() if not k.name.startswith('flow/')])
     if args.flow in ['flownet1', 'flownet2']:
         saver_fn = tf.train.Saver([k for k in tf.global_variables() if k.name.startswith('flow/')])
+    
+    if args.static == 'unet':
+        static_network = sm.Unet(backbone_name=BACKBONE, encoder_weights=None, activation=ACTIVATION_FN, classes=N_CLASSES)
 
     with tf.Session() as sess:
         if args.ckpt != '': # load checkpoints models saved in training
@@ -76,11 +80,11 @@ def evaluate(args):
         elif args.flow == 'flownet2':
             saver_fn.restore(sess, './checkpoints/flownet2')
 
-        weight_print = sess.run(weight_check)
-        for k, v in weight_print.items():
-            print("%s, max %.5f, min abs %.5f, mean abs %.5f, median abs %.5f" \
-                 % (k, np.max(v), np.min(np.abs(v)), np.mean(np.abs(v)), np.median(np.abs(v))))
-            # print(v)
+        # weight_print = sess.run(weight_check)
+        # for k, v in weight_print.items():
+        #     print("%s, max %.5f, min abs %.5f, mean abs %.5f, median abs %.5f" \
+        #          % (k, np.max(v), np.min(np.abs(v)), np.mean(np.abs(v)), np.median(np.abs(v))))
+        #     # print(v)
 
         # initialization to store iou
         iou_dict = OrderedDict()
@@ -164,12 +168,12 @@ def evaluate(args):
                     # GRFP
 
                     #### check weights to diagnose ###
-                    input0 = {
-                        im0: im, last_im0: last_im, flow0: flow, h0: h, x0: x
-                    }
-                    h_check, r, h_prev_warped, h_prev_reset, h_tilde, z, xh_x, hh_r, xz_x, hz_r, h_prev_check = \
-                        sess.run([h_check0, r0, h_prev_warped0, h_prev_reset0, h_tilde0, z0, xh_x0, hh_r0, xz_x0, hz_r0, h_prev_check0],\
-                             feed_dict = input0)
+                    # input0 = {
+                    #     im0: im, last_im0: last_im, flow0: flow, h0: h, x0: x
+                    # }
+                    # h_check, r, h_prev_warped, h_prev_reset, h_tilde, z, xh_x, hh_r, xz_x, hz_r, h_prev_check = \
+                    #     sess.run([h_check0, r0, h_prev_warped0, h_prev_reset0, h_tilde0, z0, xh_x0, hh_r0, xz_x0, hz_r0, h_prev_check0],\
+                    #          feed_dict = input0)
                     # print("h, max %.5f, min %.5f, mean %.5f" % (np.max(h_check), np.min(h_check), np.mean(h_check)))
                     # print("r, max %.5f, min %.5f, mean %.5f" % (np.max(r), np.min(r), np.mean(r)))
                     # print("h_prev_warped, max %.5f, min %.5f, mean %.5f" % (np.max(h_prev_warped), np.min(h_prev_warped), np.mean(h_prev_warped)))
@@ -193,23 +197,23 @@ def evaluate(args):
                     # print(np.sum(np.abs(h_prev_reset) > 0.01))
                     # print(np.sum(np.abs(h_prev_reset) > 0.1))
                     # print("next")
-                    print("xh_x")
-                    print(np.sum(xh_x != 0))
-                    print(np.sum(np.abs(xh_x) > 0.01))
-                    print(np.sum(np.abs(xh_x) > 0.1))
-                    print("hh_r")
-                    print(np.sum(hh_r != 0))
-                    print(np.sum(np.abs(hh_r) > 0.01))
-                    print(np.sum(np.abs(hh_r) > 0.1))
-                    print("xz_x")
-                    print(np.sum(xz_x != 0))
-                    print(np.sum(np.abs(xz_x) > 0.01))
-                    print(np.sum(np.abs(xz_x) > 0.1))
-                    print("hz_r")
-                    print(np.sum(hz_r != 0))
-                    print(np.sum(np.abs(hz_r) > 0.01))
-                    print(np.sum(np.abs(hz_r) > 0.1))
-                    print("next")
+                    # print("xh_x")
+                    # print(np.sum(xh_x != 0))
+                    # print(np.sum(np.abs(xh_x) > 0.01))
+                    # print(np.sum(np.abs(xh_x) > 0.1))
+                    # print("hh_r")
+                    # print(np.sum(hh_r != 0))
+                    # print(np.sum(np.abs(hh_r) > 0.01))
+                    # print(np.sum(np.abs(hh_r) > 0.1))
+                    # print("xz_x")
+                    # print(np.sum(xz_x != 0))
+                    # print(np.sum(np.abs(xz_x) > 0.01))
+                    # print(np.sum(np.abs(xz_x) > 0.1))
+                    # print("hz_r")
+                    # print(np.sum(hz_r != 0))
+                    # print(np.sum(np.abs(hz_r) > 0.01))
+                    # print(np.sum(np.abs(hz_r) > 0.1))
+                    # print("next")
                     ################
 
                     h, pred = sess.run([new_h, prediction], feed_dict=inputs)
@@ -227,7 +231,7 @@ def evaluate(args):
             # output_path = '%s_%s_%s.png' % (city, seq, frame)
             if args.original_static == 1:
                 # output_path = '%s_02_%s_pred_%df_fix.png' % (seq, frame, args.frames)
-                output_path = '%s_02_%s_pred_%s_inf%d_fix.png' % (seq, frame, args.ckpt[14:], args.frames)
+                output_path = '%s_02_%s_pred_%s_inf%d_fix_gt%d.png' % (seq, frame, args.ckpt[14:], args.frames, args.first_gt)
             else:
                 output_path = '%s_02_%s_pred_%s_inf%d.png' % (seq, frame, args.ckpt[14:], args.frames)
             # cv2.imwrite(os.path.join(cfg.cityscapes_dir, 'results', output_path), S_new)

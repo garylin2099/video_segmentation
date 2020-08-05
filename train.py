@@ -25,12 +25,12 @@ def train(args):
 
     # learning rates for the GRU and the static segmentation networks, respectively
     # learning_rate = 2e-5 # original paper
-    learning_rate = 0.1
+    learning_rate = 0.001
     # static_learning_rate = 2e-12 # original paper
     # static_learning_rate_lrr = 1 # second stage
     
     # The total number of iterations and when the static network should start being refined
-    nbr_iterations = 5600
+    nbr_iterations = 11200
     # t0_dilation_net = 5000
     # t0_dilation_net = 0
 
@@ -56,16 +56,16 @@ def train(args):
     gru_loss_val, gru_input_images_tensor_val, gru_input_flow_tensor_val, \
         gru_input_segmentation_tensor_val, gru_targets_val = RNN.get_validation_loss(args.frames)
 
-    if args.static == 'lrr':
-        static_input = tf.placeholder(tf.float32)
-        static_network = LRR()
-        static_output = static_network(static_input)
+    # if args.static == 'lrr':
+    #     static_input = tf.placeholder(tf.float32)
+    #     static_network = LRR()
+    #     static_output = static_network(static_input)
 
-        # static_learning_rate = tf.placeholder(tf.float32) # variable learning rate
+    #     # static_learning_rate = tf.placeholder(tf.float32) # variable learning rate
 
-        unary_opt, unary_dLdy = static_network.get_optimizer(static_input, static_output, static_learning_rate)
-    elif args.static == 'unet':
-        static_network = sm.Unet(backbone_name=BACKBONE, encoder_weights=None, activation=ACTIVATION_FN, classes=N_CLASSES)
+    #     unary_opt, unary_dLdy = static_network.get_optimizer(static_input, static_output, static_learning_rate)
+    # elif args.static == 'unet':
+    #     static_network = sm.Unet(backbone_name=BACKBONE, encoder_weights=None, activation=ACTIVATION_FN, classes=N_CLASSES)
 
     # random.seed(5)
     # np.random.seed(5)
@@ -80,12 +80,15 @@ def train(args):
     loss_history_smoothed_val = np.zeros(nbr_iterations)
 
     vars_trainable = [k for k in tf.trainable_variables() if not k.name.startswith('flow/')]
-    vars_static = [k for k in vars_trainable if not k in RNN.weights.values()]
-    loader_static = tf.train.Saver(vars_static)
+    # vars_static = [k for k in vars_trainable if not k in RNN.weights.values()]
+    # loader_static = tf.train.Saver(vars_static)
     saver = tf.train.Saver(vars_trainable)
     
     if args.flow in ['flownet1', 'flownet2']:
         saver_fn = tf.train.Saver([k for k in tf.trainable_variables() if k.name.startswith('flow/')])
+    
+    if args.static == 'unet':
+        static_network = sm.Unet(backbone_name=BACKBONE, encoder_weights=None, activation=ACTIVATION_FN, classes=N_CLASSES)
 
     init = tf.global_variables_initializer()
 
@@ -103,7 +106,7 @@ def train(args):
 
         use_ckpt = 0
         if args.ckpt is not None and args.ckpt != '':
-            saver.restore(sess, './checkpoints/round1/%s' % (args.ckpt))
+            # saver.restore(sess, './checkpoints/round1/%s' % (args.ckpt))
             use_ckpt = 1
 
         if args.flow == 'flownet1':
@@ -140,8 +143,8 @@ def train(args):
 
             # GRFP
             rnn_input = {
-                # gru_learning_rate: learning_rate,
-                gru_learning_rate: learning_rate * (1-(training_it+1)/nbr_iterations),
+                gru_learning_rate: learning_rate,
+                # gru_learning_rate: learning_rate * (1-(training_it+1)/nbr_iterations),
                 gru_input_images_tensor: np.stack(images),
                 gru_input_flow_tensor: np.stack(optflow),
                 gru_input_segmentation_tensor: np.stack(static_segm),
@@ -209,7 +212,7 @@ def train(args):
 
                 val_loss_last_epoch = np.mean(loss_history_val[(training_it+1-28): (training_it+1)])
                 if val_loss_last_epoch < min_val_loss:
-                    saver.save(sess, './checkpoints/%s_%s_tr%d_best_lr-1' % (args.static, args.flow, args.frames))
+                    saver.save(sess, './checkpoints/%s_%s_tr%d_best_lr-3' % (args.static, args.flow, args.frames))
                     print("validation loss improved from %.4f to %.4f, save checkpoint, training epoch is %d" %\
                          (min_val_loss, val_loss_last_epoch, (training_it+1) / 112))
                     min_val_loss = val_loss_last_epoch
@@ -217,13 +220,13 @@ def train(args):
                     print("validation loss didn't improve from %.4f" % min_val_loss)
 
             if training_it > 0 and (training_it+1) % 5600 == 0:
-                saver.save(sess, './checkpoints/%s_%s_tr%d_it%d_lr-1' % (args.static, args.flow, args.frames, training_it+1))
+                saver.save(sess, './checkpoints/%s_%s_tr%d_it%d_lr-3' % (args.static, args.flow, args.frames, training_it+1))
 
         # loss_hist_file = np.asarray(loss_history)
         # np.savetxt("./loss_hist/loss_hist_%s_%s_it%d.csv" % (args.static, args.flow, nbr_iterations + use_ckpt * 6000), loss_hist_file, delimiter=",")
 
         plot_loss_curve(loss_history_smoothed, loss_history_smoothed_val, \
-            "%s_%s_loss_curve_f%d_lr-1" % (args.static, args.flow, args.frames))
+            "%s_%s_loss_curve_f%d_lr-3" % (args.static, args.flow, args.frames))
 
 
 if __name__ == '__main__':
