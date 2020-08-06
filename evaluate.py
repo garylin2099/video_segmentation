@@ -93,6 +93,8 @@ def evaluate(args):
             iou_dict[category] = []
         iou_dict['im_avrg'] = []
 
+        mask_dict = OrderedDict()
+
         if args.eval_set == 'train':
             eval_path = VD_TRAIN_PATH
             L = glob.glob(os.path.join(VD_TRAIN_PATH, "*.png"))
@@ -222,10 +224,18 @@ def evaluate(args):
 
             # save it
             S = pred[0] # S is a 2D predicted map, each entry 0-7, 512x512
-            S_new = S.copy()
+            # S_new = S.copy()
             # for (idx, train_idx) in cs_id2trainid.iteritems():
             #     S_new[S == train_idx] = idx
             
+            date_index = '02_' + frame
+            if mask_dict.get(date_index) is None:
+                mask_dict[date_index] = [S]
+                mask_dict['gt_'+date_index] = [colors_to_labels(gt_path)]
+            else:
+                mask_dict[date_index].append(S)
+                mask_dict['gt_'+date_index].append(colors_to_labels(gt_path))
+
             categorical_iou_eval_each_im(gt_path, S, iou_dict)
 
             # output_path = '%s_%s_%s.png' % (city, seq, frame)
@@ -238,7 +248,15 @@ def evaluate(args):
             S_color = labels_to_colors(S)
             cv2.imwrite(os.path.join('./pred_mask_%s' % args.eval_set, output_path), S_color)
         
-        iou_mean(iou_dict, '%s_inf%d_fix%d_gt%d_%s.csv' % (args.ckpt[14:], args.frames, args.original_static, args.first_gt, args.eval_set))
+        # iou_mean(iou_dict, '%s_inf%d_fix%d_gt%d_%s.csv' % (args.ckpt[14:], args.frames, args.original_static, args.first_gt, args.eval_set))
+
+        iou_dict_overall = OrderedDict()
+        iou_dict_overall['index'] = []
+        for category in TYPES:
+            iou_dict_overall[category] = []
+        iou_dict_overall['im_avrg'] = []
+        iou_filename = 'overall_%s_inf%d_gt%d_%s.csv' % (args.ckpt[14:], args.frames, args.first_gt, args.eval_set)
+        iou_overall(iou_dict_overall, mask_dict, iou_filename)
 
 
 

@@ -135,6 +135,24 @@ def iou_mean(iou, file_name):
     iou_table.to_csv(IOU_EVAL_FILE + file_name)
     print('Complete Evaluation of Categorical IoU Score on Test Images and Saved to file {}'.format(IOU_EVAL_FILE))
 
+def iou_overall(iou, mask_dict, filename):
+    "iou at overhead image level"
+    for id_, mask in mask_dict.items():
+        if id_.startswith('gt_'):
+            continue
+        print('measuring IoU {}'.format(id_))
+        iou['index'].append(id_)
+        pred_label_map = np.array(mask).flatten()
+        truth_label_map = np.array(mask_dict['gt_'+id_]).flatten()
+        plants_each_im = np.zeros(N_CLASSES)
+        for j in range(len(COLORS)):
+            plants_each_im[j] = iou_score(truth_label_map, pred_label_map, j)
+            iou[TYPES[j]].append(plants_each_im[j])
+        iou['im_avrg'].append(np.mean(plants_each_im))
+        print('IoU for this image is {:.3f}'.format(np.mean(plants_each_im)))
+    iou_mean(iou, filename)
+    
+
 # def show_test_truth_prediction(test_image, mask, unet_mask,test_id,num):
 #     plt.figure(figsize=(8, 24))
 #     _, axes = plt.subplots(3, 1)

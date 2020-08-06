@@ -30,7 +30,7 @@ def train(args):
     # static_learning_rate_lrr = 1 # second stage
     
     # The total number of iterations and when the static network should start being refined
-    nbr_iterations = 11200
+    nbr_iterations = 5600
     # t0_dilation_net = 5000
     # t0_dilation_net = 0
 
