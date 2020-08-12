@@ -2,3 +2,8 @@
 *.jpg
 *DS_Store
 *.h5
+__pycache__
+.vscode
+checkpoints
+loss_hist
+iou_table
