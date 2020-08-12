@@ -33,7 +33,7 @@ def plot_loss_curve(results, title):
   plt.plot(exp_val_loss, label="val_loss")
   plt.plot(np.argmin(exp_val_loss), np.min(exp_val_loss), marker="x", color="r", label="lowest loss")
   plt.xlabel("Epochs")
-  plt.ylabel("IOU Score")
+  plt.ylabel("Loss")
   plt.legend()
   plt.show()
   plt.savefig('./results/plot_loss_curve.png')

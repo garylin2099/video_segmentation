@@ -5,13 +5,17 @@
 # STAGE = 'Pruned'
 # STAGE = 'Flowering'
 # STAGE = 'all'
-STAGE = 'train0-5_val6_no_augment'
+# STAGE = 'train0-5_val6_no_augment'
 
-VD_TRAIN_PATH = './video/train/'
-VD_VALIDATION_PATH = './video/val'
-SF_TRAIN_PATH = './single_frame/train/'
-SF_VALIDATION_PATH = './single_frame/val'
-MODEL_PATH = './models'
+# VD_TRAIN_PATH = './video_new/train/'
+# VD_VALIDATION_PATH = './video_new/val/'
+VD_TRAIN_PATH = './video_same_split/train/'
+VD_VALIDATION_PATH = './video_same_split/val/'
+SF_TRAIN_PATH = './single_frame_new/train/'
+# SF_VALIDATION_PATH = './single_frame/val/'
+MODEL_PATH = './models_saved'
+# VD_TEST_PATH = './video_new/test/'
+VD_TEST_PATH = './video_same_split/test/'
 
 IM_WIDTH = 512
 IM_HEIGHT = 512
@@ -21,18 +25,22 @@ N_EPOCHS = 100
 
 RANDOM_SEED = 42
 
-BACKBONE = 'resnet18'
+# BACKBONE = 'resnet18'
+BACKBONE = 'seresnet18'
 ARCHITECTURE = 'unet'
-ACTIVATION_FN = 'relu'
+# ACTIVATION_FN = 'relu'
+ACTIVATION_FN = 'softmax'
 
-LOSS_FN = 'weighted_ce'
+LOSS_FN = 'weighted_jaccard'
 
 LOSS_WEIGHTS = [1.5, 2, 2.5, 1.5]
 
 BASELINE_FILE = '{}/baseline_model.h5'.format(MODEL_PATH)
 LAST_SAVED_MODEL = '{}/unet_resnet18_weighted_jaccard.h5'.format(MODEL_PATH)
-CHECKPOINT_FILE = ('{}/{}_{}_{}_'+STAGE+'.h5').format(MODEL_PATH, ARCHITECTURE, BACKBONE, LOSS_FN)
+# CHECKPOINT_FILE = ('{}/{}_{}_{}_'+STAGE+'.h5').format(MODEL_PATH, ARCHITECTURE, BACKBONE, LOSS_FN)
 
+TYPE_INTENSITY = [0, 28, 76, 159, 178, 105, 150] # in some masks 187 becomes 187
+# corresponds to other, nasturtium, borage, bok choi, plant1, plant2, plant3
 
 TYPES_TO_COLORS = {
     'other': (0,0,0), # all < 5
@@ -91,10 +99,12 @@ IOU_TEST_RATIO = 1.0
 # STAGE_TEST = 'Maturation2'
 # STAGE_TEST = 'Pruned'
 # STAGE_TEST = 'Flowering'
-STAGE_TEST = 'train0-5_val6_no_augment'
+# STAGE_TEST = 'train0-5_val6_no_augment'
+# STAGE_TEST = 'sf_new_split'
+STAGE_TEST = 'softmax6plants_aug2'
 
 TEST_PATH = './single_frame/test/'
-IOU_EVAL_FILE = 'unet_iou_eval'+STAGE_TEST+'trainonly.csv'
+IOU_EVAL_FILE = './iou_table/'
 
 TEST_MODEL =  ('{}/{}_{}_{}_'+STAGE_TEST+'.h5').format(MODEL_PATH, ARCHITECTURE, BACKBONE, LOSS_FN)
 # TEST_MODEL = LAST_SAVED_MODEL

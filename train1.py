@@ -56,16 +56,16 @@ def train(args):
     gru_loss_val, gru_input_images_tensor_val, gru_input_flow_tensor_val, \
         gru_input_segmentation_tensor_val, gru_targets_val = RNN.get_validation_loss(args.frames)
 
-    # if args.static == 'lrr':
-    #     static_input = tf.placeholder(tf.float32)
-    #     static_network = LRR()
-    #     static_output = static_network(static_input)
+    if args.static == 'lrr':
+        static_input = tf.placeholder(tf.float32)
+        static_network = LRR()
+        static_output = static_network(static_input)
 
-    #     # static_learning_rate = tf.placeholder(tf.float32) # variable learning rate
+        # static_learning_rate = tf.placeholder(tf.float32) # variable learning rate
 
-    #     unary_opt, unary_dLdy = static_network.get_optimizer(static_input, static_output, static_learning_rate)
-    # elif args.static == 'unet':
-    #     static_network = sm.Unet(backbone_name=BACKBONE, encoder_weights=None, activation=ACTIVATION_FN, classes=N_CLASSES)
+        unary_opt, unary_dLdy = static_network.get_optimizer(static_input, static_output, static_learning_rate)
+    elif args.static == 'unet':
+        static_network = sm.Unet(backbone_name=BACKBONE, encoder_weights=None, activation=ACTIVATION_FN, classes=N_CLASSES)
 
     # random.seed(5)
     # np.random.seed(5)
@@ -80,15 +80,12 @@ def train(args):
     loss_history_smoothed_val = np.zeros(nbr_iterations)
 
     vars_trainable = [k for k in tf.trainable_variables() if not k.name.startswith('flow/')]
-    # vars_static = [k for k in vars_trainable if not k in RNN.weights.values()]
-    # loader_static = tf.train.Saver(vars_static)
+    vars_static = [k for k in vars_trainable if not k in RNN.weights.values()]
+    loader_static = tf.train.Saver(vars_static)
     saver = tf.train.Saver(vars_trainable)
     
     if args.flow in ['flownet1', 'flownet2']:
         saver_fn = tf.train.Saver([k for k in tf.trainable_variables() if k.name.startswith('flow/')])
-    
-    if args.static == 'unet':
-        static_network = sm.Unet(backbone_name=BACKBONE, encoder_weights=None, activation=ACTIVATION_FN, classes=N_CLASSES)
 
     init = tf.global_variables_initializer()
 
@@ -106,7 +103,7 @@ def train(args):
 
         use_ckpt = 0
         if args.ckpt is not None and args.ckpt != '':
-            # saver.restore(sess, './checkpoints/round1/%s' % (args.ckpt))
+            saver.restore(sess, './checkpoints/round1/%s' % (args.ckpt))
             use_ckpt = 1
 
         if args.flow == 'flownet1':
