@@ -1,12 +1,8 @@
 import argparse, glob, os, cv2, sys, pickle
 import numpy as np
 import tensorflow as tf
-# import config as cfg
 from models.stgru import STGRU
-from models.lrr import LRR
-from models.dilation import dilation10network
 from models.flownet2 import Flownet2
-# from models.flownet1 import Flownet1
 from tensorflow.python.framework import ops
 
 from constants import *
@@ -51,13 +47,6 @@ def evaluate(args):
     x0 = tf.placeholder(tf.float32)
     h_check0, r0, h_prev_warped0, h_prev_reset0, h_tilde0, z0, xh_x0, hh_r0, xz_x0, hz_r0, h_prev_check0 =\
          RNN.print_GRU_cell(im0, last_im0, flow0, h0, x0)
-
-    # if args.static == 'lrr':
-    #     static_input = tf.placeholder(tf.float32)
-    #     static_network = LRR()
-    #     static_output = static_network(static_input)
-    # elif args.static == 'unet':
-    #     static_network = sm.Unet(backbone_name=BACKBONE, encoder_weights=None, activation=ACTIVATION_FN, classes=N_CLASSES)
 
     saver = tf.train.Saver([k for k in tf.global_variables() if not k.name.startswith('flow/')])
     # saver = tf.train.Saver([k for k in tf.trainable_variables() if not k.name.startswith('flow/')])
@@ -106,13 +95,12 @@ def evaluate(args):
             # L = glob.glob(os.path.join(VD_TEST_PATH, "*02_1[56]_2020_cal.png"))
             L = glob.glob(os.path.join(VD_TEST_PATH, "*.png"))
         
-        # L = glob.glob(os.path.join(cfg.cityscapes_dir, 'gtFine', data_split, "*", "*labelIds.png"))
         # L = glob.glob(os.path.join(VD_TRAIN_PATH, "*.png"))
         # L = glob.glob(os.path.join(VD_VALIDATION_PATH, "*.png"))
         # L = glob.glob(os.path.join(VD_TEST_PATH, "*02_16_2020_cal.png"))
         for (progress_counter, gt_path) in enumerate(L):
             parts = gt_path.split('/')[-1].split('_')
-            # city, seq, frame = parts[0], parts[1], parts[2]
+
             seq, frame = parts[0], parts[2]
 
             # print("Processing sequence %d/%d" % (progress_counter+1, len(L)))
@@ -120,10 +108,6 @@ def evaluate(args):
             # for dt in range(-args.frames + 1, 1, 2):
                 first_frame = dt == -args.frames + 1
                 t = int(frame) + dt
-                
-                # frame_path = os.path.join(cfg.cityscapes_video_dir, 'leftImg8bit_sequence', data_split, 
-                #         city, ("%s_%s_%06d_leftImg8bit.png" % (city, seq, t)))
-                # im = cv2.imread(frame_path, 1).astype(np.float32)[np.newaxis,...]
                 
                 # frame_path = os.path.join(VD_TRAIN_PATH, ("%s_02_%02d_2020_cal.jpg" % (seq, t)))
                 # frame_path = os.path.join(VD_VALIDATION_PATH, ("%s_02_%02d_2020_cal.jpg" % (seq, t)))
@@ -140,9 +124,7 @@ def evaluate(args):
                         flow = sess.run(flow_tensor, feed_dict={flow_img0: im, flow_img1: last_im})
 
                 # Static segmentation
-                if args.static == 'lrr':
-                    x = sess.run(static_output, feed_dict={static_input: im})
-                elif args.static == 'unet':
+                if args.static == 'unet':
                     x = static_network.predict(im)
                 
                 if first_frame:
@@ -151,13 +133,13 @@ def evaluate(args):
                         # leverage first gt mask in subsequent segmentation
                         h = gt_to_one_hot_map(first_gt).astype('float32') # h is 1x512x512x7 0-1 map
                         # print(h.shape)
-                        h = h * 10
+                        h = h * 10 # amplify 0 and 1 to 0 and 10 such that they are close to 0 and 1 after softmaxing
                         # h = h * 0 # let mask be random
                         # y_h = sess.run(softmax_result, feed_dict={h_input: h})
                         # print(y_h[0,50,50,:])
                         print("use the ground truth mask of the first frame")
                     else: # if first frame gt doesnt exist or we only use single-frame approach
-                        # the hidden state is simple the static segmentation for the first frame
+                        # the hidden state is simply the static segmentation for the first frame
                         h = x # x shape (1, 512, 512, 7)
                         pred = np.argmax(h, axis=3)
                 else:
@@ -224,9 +206,6 @@ def evaluate(args):
 
             # save it
             S = pred[0] # S is a 2D predicted map, each entry 0-7, 512x512
-            # S_new = S.copy()
-            # for (idx, train_idx) in cs_id2trainid.iteritems():
-            #     S_new[S == train_idx] = idx
             
             date_index = '02_' + frame
             if mask_dict.get(date_index) is None:
@@ -238,13 +217,11 @@ def evaluate(args):
 
             categorical_iou_eval_each_im(gt_path, S, iou_dict)
 
-            # output_path = '%s_%s_%s.png' % (city, seq, frame)
             if args.original_static == 1:
                 # output_path = '%s_02_%s_pred_%df_fix.png' % (seq, frame, args.frames)
                 output_path = '%s_02_%s_pred_%s_inf%d_fix_gt%d.png' % (seq, frame, args.ckpt[14:], args.frames, args.first_gt)
             else:
                 output_path = '%s_02_%s_pred_%s_inf%d.png' % (seq, frame, args.ckpt[14:], args.frames)
-            # cv2.imwrite(os.path.join(cfg.cityscapes_dir, 'results', output_path), S_new)
             S_color = labels_to_colors(S)
             cv2.imwrite(os.path.join('./pred_mask_%s' % args.eval_set, output_path), S_color)
         

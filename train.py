@@ -1,16 +1,11 @@
 import argparse, glob, os, cv2, sys, pickle, random
 import numpy as np
 import tensorflow as tf
-# import config as cfg
 from models.stgru import STGRU
-from models.lrr import LRR
-from models.dilation import dilation10network
 from models.flownet2 import Flownet2
-# from models.flownet1 import Flownet1
 from tensorflow.python.framework import ops
 
 from constants import *
-# import matplotlib.pyplot as plt
 import segmentation_models as sm
 from grfp_utils import *
 
@@ -27,12 +22,9 @@ def train(args):
     # learning_rate = 2e-5 # original paper
     learning_rate = 0.001
     # static_learning_rate = 2e-12 # original paper
-    # static_learning_rate_lrr = 1 # second stage
     
     # The total number of iterations and when the static network should start being refined
     nbr_iterations = 5600
-    # t0_dilation_net = 5000
-    # t0_dilation_net = 0
 
     im_size = [512, 512]
     # image_mean = [72.39,82.91,73.16] # the mean is automatically subtracted in some modules e.g. flownet2, so be careful
@@ -55,17 +47,6 @@ def train(args):
 
     gru_loss_val, gru_input_images_tensor_val, gru_input_flow_tensor_val, \
         gru_input_segmentation_tensor_val, gru_targets_val = RNN.get_validation_loss(args.frames)
-
-    # if args.static == 'lrr':
-    #     static_input = tf.placeholder(tf.float32)
-    #     static_network = LRR()
-    #     static_output = static_network(static_input)
-
-    #     # static_learning_rate = tf.placeholder(tf.float32) # variable learning rate
-
-    #     unary_opt, unary_dLdy = static_network.get_optimizer(static_input, static_output, static_learning_rate)
-    # elif args.static == 'unet':
-    #     static_network = sm.Unet(backbone_name=BACKBONE, encoder_weights=None, activation=ACTIVATION_FN, classes=N_CLASSES)
 
     # random.seed(5)
     # np.random.seed(5)
@@ -95,18 +76,13 @@ def train(args):
     with tf.Session() as sess:
         sess.run(init)
 
-        # if args.static == 'lrr':
-        #     loader_static.restore(sess, './checkpoints/lrr_pretrained')
-        # elif args.static == 'dilation':
-        #     assert False, "Pretrained dilation model will soon be released."
-        #     saver.restore(sess, './checkpoints/dilation_grfp')
         if args.static == 'unet':
             static_network.load_weights(TEST_MODEL)
             print("use pre-trained unet at %s" % TEST_MODEL)
 
         use_ckpt = 0
         if args.ckpt is not None and args.ckpt != '':
-            # saver.restore(sess, './checkpoints/round1/%s' % (args.ckpt))
+            # saver.restore(sess, './checkpoints/%s' % (args.ckpt))
             use_ckpt = 1
 
         if args.flow == 'flownet1':
@@ -136,9 +112,6 @@ def train(args):
                     # print("static seg, input shape", im.shape)
                     x = static_network.predict(im)
                     # print(x.shape)
-                elif args.static == 'lrr':
-                    x = sess.run(static_output, feed_dict={static_input: im})
-                    # print("output tensor shape", x.shape)
                 static_segm.append(x)
 
             # GRFP
@@ -186,20 +159,6 @@ def train(args):
             else:
                 loss_history_smoothed[training_it] = 0.997*loss_history_smoothed[training_it-1] + 0.003*loss
                 loss_history_smoothed_val[training_it] = 0.997*loss_history_smoothed_val[training_it-1] + 0.003*loss_val
-
-            # Refine the static network?
-            # The reason that a two-stage training routine is used
-            # is because there is not enough GPU memory (with a 12 GB Titan X)
-            # to do it in one pass.
-            # if training_it+1 > t0_dilation_net:
-            #     for k in range(len(images)-3, len(images)):
-            #         g = unary_grads[0][k]
-            #         im = images[k]
-            #         _ = sess.run([unary_opt], feed_dict={
-            #           static_input: im,
-            #           unary_dLdy: g
-            #           ,static_learning_rate: static_learning_rate_lrr * (1-(training_it+1)/nbr_iterations)**2
-            #         })
 
             if (training_it+1) % 20 == 0:
                 print("Iteration %d/%d: Training Loss %.3f" % (training_it+1, nbr_iterations, loss_history_smoothed[training_it]))
