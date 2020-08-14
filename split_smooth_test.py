@@ -6,11 +6,15 @@ from skimage.io import imread, imshow, concatenate_images,imsave
 from tqdm import tqdm_notebook, tnrange
 import numpy as np
 
-IMG_MASK_PATH = "./overhead_0202_to_0216/"
+# IMG_MASK_PATH = "./smooth_test_img/davis/"
+IMG_MASK_PATH = "./smooth_test_img/leaf/"
+IM_WIDTH = 480
+IM_HEIGHT = 480
 
 def saveSplit(ids,chunk_num):
     ### Adjust Split Folder###
-    save_path = "./video_all_same/"
+    # save_path = "./smooth_all/davis/"
+    save_path = "./smooth_all/leaf/"
 
     ### Adjust photo ###
     for _, id_ in tqdm_notebook(enumerate(ids), total=len(ids)):
@@ -43,39 +47,11 @@ def split2(im):
     # print(im.shape)
     ret = []
 
-    for i in np.arange(0, im.shape[0] - IM_HEIGHT, IM_HEIGHT):
-        for j in np.arange(0, im.shape[1] - IM_WIDTH, IM_WIDTH):
+    for i in np.arange(0, im.shape[0] - IM_HEIGHT + 1, IM_HEIGHT):
+        for j in np.arange(0, im.shape[1] - IM_WIDTH + 1, IM_WIDTH):
             s = im[i:i+IM_HEIGHT, j:j+IM_WIDTH]
             ret.append(s)
-    # for j in np.arange(0, im.shape[1] - IM_WIDTH, IM_WIDTH):
-    #     for i in np.arange(0, im.shape[0] - IM_HEIGHT, IM_HEIGHT):
-    #         s = im[i:i+IM_HEIGHT, j:j+IM_WIDTH]
-    #         ret.append(s)
 
-    return ret
-        
-            
-
-def split(im, chunk_num=1):
-    inc = int(3024/chunk_num)
-
-    yran = int(3024 / inc) 
-    xran = int(4032 / inc) 
-
-    offset = int((4032 - xran*inc)/2)
-        
-    ret = []
-    sy = 0
-    sx = offset
-    
-    for y in range(yran):
-        for x in range(xran):
-            s = im[sy:sy+inc,sx:sx+inc]
-            ret.append(s)
-            sx += inc
-        sx = offset
-        sy += inc
-    
     return ret
 
 

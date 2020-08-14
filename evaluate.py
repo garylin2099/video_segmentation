@@ -246,7 +246,7 @@ if __name__ == '__main__':
     parser.add_argument('--ckpt', help='Which checkpoint file to load from. Specify relative to the ./checkpoints/ directory.', default='', required=False)
     parser.add_argument('--original_static', type=int, help='whether to use original weights for static nn', default=0, required=False)
     parser.add_argument('--eval_set', help='evaluate on train or val or test', default='test', required=False)
-    parser.add_argument('--first_gt', type=int, help='whether to use the first frame gt', default=1, required=False)
+    parser.add_argument('--first_gt', type=int, help='whether to use the first frame gt', default=0, required=False)
 
     args = parser.parse_args()
 
