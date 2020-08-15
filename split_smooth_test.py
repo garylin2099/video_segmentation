@@ -1,4 +1,5 @@
 import os
+import argparse
 from math import *
 import cv2
 from skimage.transform import resize
@@ -6,15 +7,13 @@ from skimage.io import imread, imshow, concatenate_images,imsave
 from tqdm import tqdm_notebook, tnrange
 import numpy as np
 
-# IMG_MASK_PATH = "./smooth_test_img/davis/"
-IMG_MASK_PATH = "./smooth_test_img/leaf/"
 IM_WIDTH = 480
 IM_HEIGHT = 480
 
-def saveSplit(ids,chunk_num):
+def saveSplit(ids,path):
     ### Adjust Split Folder###
     # save_path = "./smooth_all/davis/"
-    save_path = "./smooth_all/leaf/"
+    save_path = "./smooth_all/%s/" % path # leaf or davis
 
     ### Adjust photo ###
     for _, id_ in tqdm_notebook(enumerate(ids), total=len(ids)):
@@ -55,8 +54,15 @@ def split2(im):
     return ret
 
 
+
+parser = argparse.ArgumentParser(description='split')
+parser.add_argument('--path', help='what data to split.', required=True)
+args = parser.parse_args()
+
+IMG_MASK_PATH = "./smooth_test_img/%s/" % args.path # leaf or davis
+
 # leaf_ids = set([f_name[:-4] for f_name in os.listdir(IMG_MASK_PATH)])
 leaf_ids = set([f_name for f_name in os.listdir(IMG_MASK_PATH)])
-saveSplit(leaf_ids,chunk_num=2)
+saveSplit(leaf_ids, args.path)
 
 print("split over")
